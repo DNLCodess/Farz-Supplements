@@ -1,26 +1,161 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ===== PRIMARY BRAND COLORS - GREEN ===== */
+  /* Forest Green - Primary actions, headers, CTAs */
+  --green-950: #1a3009;
+  --green-900: #2d5016; /* Main brand color */
+  --green-800: #3a6a1c;
+  --green-700: #478422;
+  --green-600: #549e28;
+
+  /* Sage Green - Secondary actions, hover states */
+  --green-500: #7a9d54; /* Secondary brand color */
+  --green-400: #91b06d;
+  --green-300: #a8c386;
+  --green-200: #bfd69f;
+  --green-100: #d4e7c5; /* Subtle backgrounds */
+
+  /* Mint Green - Very subtle backgrounds and accents */
+  --green-50: #e9f3dd;
+  --green-25: #f4f9f0;
+
+  /* ===== NEUTRAL COLORS - WHITES & GRAYS ===== */
+  /* Whites - Backgrounds */
+  --white: #ffffff; /* Pure white - main backgrounds */
+  --warm-white: #fafaf8; /* Section backgrounds */
+  --off-white: #f5f5f3; /* Subtle backgrounds */
+
+  /* Grays - Text and borders */
+  --charcoal: #2c2c2c; /* Main text */
+  --gray-900: #333333; /* Dark text */
+  --gray-800: #4a4a4a; /* Medium dark text */
+  --gray-700: #666666; /* Secondary text */
+  --gray-600: #808080; /* Muted text */
+  --gray-500: #999999; /* Placeholder text */
+  --gray-400: #b3b3b3; /* Disabled text */
+  --gray-300: #cccccc; /* Borders */
+  --gray-200: #e5e5e5; /* Light borders */
+  --gray-100: #f0f0f0; /* Light backgrounds */
+  --gray-50: #f8f8f8; /* Very light backgrounds */
+
+  /* ===== ACCENT COLORS ===== */
+  /* Trust Blue - Links and informational elements */
+  --blue-600: #4a90e2;
+  --blue-500: #5ba3f5;
+  --blue-400: #6cb4ff;
+  --blue-100: #e3f2ff;
+  --blue-50: #f0f8ff;
+
+  /* Success Green - In stock, success messages */
+  --success-700: #3fa017;
+  --success-600: #52c41a;
+  --success-500: #73d13d;
+  --success-400: #95de64;
+  --success-100: #d9f7be;
+  --success-50: #f6ffed;
+
+  /* Warning Orange - Low stock, alerts */
+  --warning-700: #d87a0d;
+  --warning-600: #fa8c16;
+  --warning-500: #ffa940;
+  --warning-400: #ffc069;
+  --warning-100: #ffe7ba;
+  --warning-50: #fff7e6;
+
+  /* Error Red - Out of stock, errors */
+  --error-700: #cf1322;
+  --error-600: #f5222d;
+  --error-500: #ff4d4f;
+  --error-400: #ff7875;
+  --error-100: #ffccc7;
+  --error-50: #fff1f0;
+
+  /* ===== DEFAULT THEME VALUES ===== */
+  --background: var(--white);
+  --foreground: var(--charcoal);
 }
 
 @theme inline {
+  /* Background & Foreground */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Primary Brand Colors - Green */
+  --color-green-950: var(--green-950);
+  --color-green-900: var(--green-900);
+  --color-green-800: var(--green-800);
+  --color-green-700: var(--green-700);
+  --color-green-600: var(--green-600);
+  --color-green-500: var(--green-500);
+  --color-green-400: var(--green-400);
+  --color-green-300: var(--green-300);
+  --color-green-200: var(--green-200);
+  --color-green-100: var(--green-100);
+  --color-green-50: var(--green-50);
+  --color-green-25: var(--green-25);
+
+  /* Neutral Colors */
+  --color-white: var(--white);
+  --color-warm-white: var(--warm-white);
+  --color-off-white: var(--off-white);
+  --color-charcoal: var(--charcoal);
+
+  --color-gray-900: var(--gray-900);
+  --color-gray-800: var(--gray-800);
+  --color-gray-700: var(--gray-700);
+  --color-gray-600: var(--gray-600);
+  --color-gray-500: var(--gray-500);
+  --color-gray-400: var(--gray-400);
+  --color-gray-300: var(--gray-300);
+  --color-gray-200: var(--gray-200);
+  --color-gray-100: var(--gray-100);
+  --color-gray-50: var(--gray-50);
+
+  /* Accent Colors - Blue */
+  --color-blue-600: var(--blue-600);
+  --color-blue-500: var(--blue-500);
+  --color-blue-400: var(--blue-400);
+  --color-blue-100: var(--blue-100);
+  --color-blue-50: var(--blue-50);
+
+  /* Accent Colors - Success */
+  --color-success-700: var(--success-700);
+  --color-success-600: var(--success-600);
+  --color-success-500: var(--success-500);
+  --color-success-400: var(--success-400);
+  --color-success-100: var(--success-100);
+  --color-success-50: var(--success-50);
+
+  /* Accent Colors - Warning */
+  --color-warning-700: var(--warning-700);
+  --color-warning-600: var(--warning-600);
+  --color-warning-500: var(--warning-500);
+  --color-warning-400: var(--warning-400);
+  --color-warning-100: var(--warning-100);
+  --color-warning-50: var(--warning-50);
+
+  /* Accent Colors - Error */
+  --color-error-700: var(--error-700);
+  --color-error-600: var(--error-600);
+  --color-error-500: var(--error-500);
+  --color-error-400: var(--error-400);
+  --color-error-100: var(--error-100);
+  --color-error-50: var(--error-50);
+
+  /* Primary shortcuts for convenience */
+  --color-primary: var(--green-900);
+  --color-primary-hover: var(--green-800);
+  --color-secondary: var(--green-500);
+
+  /* Font families */
+  --font-sans: var(--font-geist-sans);
+  --font-inter: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
