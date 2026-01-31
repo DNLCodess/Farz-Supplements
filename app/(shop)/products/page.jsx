@@ -17,12 +17,12 @@ export const metadata = {
 export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section with Search - REMOVED overflow-hidden */}
+      {/* Hero Section with Search */}
       <section className="relative border-b border-gray-200">
-        {/* Background Image Container - ADD overflow-hidden here instead */}
+        {/* Background Image Container - overflow-hidden here */}
         <div className="absolute inset-0 overflow-hidden">
           <Image
-            src="/bg/plants.jpg" // image in /public
+            src="/bg/plants.jpg"
             alt="Healthy natural products background"
             fill
             priority
@@ -32,7 +32,7 @@ export default function ProductsPage() {
           <div className="absolute inset-0 bg-green-900/50" />
         </div>
 
-        {/* Content - ADD higher z-index for search dropdown */}
+        {/* Content - higher z-index for search dropdown */}
         <div className="relative z-10 container mx-auto px-4 py-8 md:py-12">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -44,18 +44,20 @@ export default function ProductsPage() {
               products
             </p>
 
-            {/* SearchBar with explicit z-index context */}
-            <div className="relative z-20">
-              <SearchBar
-                className="max-w-2xl mx-auto"
-                placeholder="Search for products, categories, or ingredients..."
-              />
-            </div>
+            {/* SearchBar with explicit z-index - also needs Suspense */}
+            <Suspense fallback={<SearchBarSkeleton />}>
+              <div className="relative z-20">
+                <SearchBar
+                  className="max-w-2xl mx-auto"
+                  placeholder="Search for products, categories, or ingredients..."
+                />
+              </div>
+            </Suspense>
           </div>
         </div>
       </section>
 
-      {/* Products Content with Filters */}
+      {/* Products Content with Filters - Wrapped in Suspense */}
       <Suspense fallback={<ProductsLoadingState />}>
         <ProductsContent />
       </Suspense>
@@ -63,7 +65,16 @@ export default function ProductsPage() {
   );
 }
 
-// Loading state for initial page load
+// SearchBar Loading Skeleton
+function SearchBarSkeleton() {
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="w-full h-12 md:h-14 bg-white/20 rounded-lg animate-pulse" />
+    </div>
+  );
+}
+
+// Products Loading State
 function ProductsLoadingState() {
   return (
     <div className="container mx-auto px-4 py-8">
