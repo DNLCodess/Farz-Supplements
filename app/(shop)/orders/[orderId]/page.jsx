@@ -27,7 +27,7 @@ export default function OrderDetailPage({ params }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const resolvedParams = use(params);
-  const orderId = resolvedParams.id;
+  const orderId = resolvedParams.orderId;
 
   const [email, setEmail] = useState("");
   const [emailSubmitted, setEmailSubmitted] = useState(false);
@@ -241,12 +241,18 @@ export default function OrderDetailPage({ params }) {
   const currentStatus = statusConfig[order.status] || statusConfig.pending;
   const StatusIcon = currentStatus.icon;
 
+  // Extract shipping address (handle JSONB object)
+  const shippingAddress =
+    typeof order.shipping_address === "object"
+      ? order.shipping_address
+      : { address: order.shipping_address };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 lg:py-12">
       <div className="container mx-auto px-4">
         {/* Success Banner */}
         {showSuccessBanner && (
-          <div className="max-w-4xl mx-auto mb-8 bg-green-50 border-2 border-green-200 rounded-2xl p-6 shadow-sm animate-in fade-in slide-in-from-top duration-500">
+          <div className="max-w-4xl mx-auto mb-8 bg-green-50 border-2 border-green-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <CheckCircle2 className="w-7 h-7 text-white" />
@@ -350,7 +356,7 @@ export default function OrderDetailPage({ params }) {
                   key={item.id}
                   className="flex gap-4 pb-4 border-b-2 border-gray-200 last:border-0"
                 >
-                  <div className="relative w-24 h-24 flex-shrink-0 bg-gray-50 rounded-xl overflow-hidden">
+                  <div className="relative w-24 h-24 shrink-0 bg-gray-50 rounded-xl overflow-hidden">
                     {!imageErrors[item.product_id] ? (
                       <Image
                         src={
@@ -377,7 +383,7 @@ export default function OrderDetailPage({ params }) {
                       Quantity: {item.quantity}
                     </p>
                     <p className="text-xl font-bold text-green-900">
-                      ₦{item.subtotal.toLocaleString()}
+                      ₦{item.total?.toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -456,11 +462,13 @@ export default function OrderDetailPage({ params }) {
                 <p className="font-semibold mb-1">
                   {order.shipping_first_name} {order.shipping_last_name}
                 </p>
-                <p>{order.shipping_address}</p>
+                <p>{shippingAddress.address}</p>
                 <p>
-                  {order.shipping_city}, {order.shipping_state}
-                  {order.shipping_postal_code &&
-                    ` ${order.shipping_postal_code}`}
+                  {shippingAddress.city || order.shipping_city},{" "}
+                  {shippingAddress.state || order.shipping_state}
+                  {(shippingAddress.postal_code ||
+                    order.shipping_postal_code) &&
+                    ` ${shippingAddress.postal_code || order.shipping_postal_code}`}
                 </p>
               </div>
             </div>
@@ -488,8 +496,8 @@ export default function OrderDetailPage({ params }) {
 
       {/* Cancel Order Modal */}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl animate-in zoom-in duration-200">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
             <div className="flex items-start justify-between mb-4">
               <h3 className="text-2xl font-bold text-gray-900">Cancel Order</h3>
               <button

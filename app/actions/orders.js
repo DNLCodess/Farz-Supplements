@@ -480,6 +480,8 @@ export async function getCustomerOrders(email, options = {}) {
  */
 export async function getOrderById(orderId, customerEmail) {
   try {
+    console.log("OrderId", orderId);
+    console.log("customer Email", customerEmail);
     const { data: order, error } = await supabaseAdmin
       .from("orders")
       .select(

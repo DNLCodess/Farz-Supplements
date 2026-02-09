@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useOrderStatus } from "@/hooks/use-orders";
+import { verifyPayment } from "@/app/actions/verify-payment";
 import { Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 function PaymentVerifyContent() {
@@ -16,7 +17,10 @@ function PaymentVerifyContent() {
     (typeof window !== "undefined" && localStorage.getItem("pending_order_id"));
 
   // Poll order status every 2 seconds
-  const { data, isLoading, error } = useOrderStatus(orderId, !!orderId);
+  const { data, isLoading, error, refetch } = useOrderStatus(
+    orderId,
+    !!orderId,
+  );
 
   useEffect(() => {
     if (!reference || !orderId) {
@@ -28,7 +32,27 @@ function PaymentVerifyContent() {
     if (typeof window !== "undefined") {
       localStorage.setItem("pending_order_id", orderId);
     }
-  }, [reference, orderId, router]);
+
+    // Manually verify payment on mount (fallback for when webhooks don't work)
+    const verifyManually = async () => {
+      console.log("[Verify Page] Manually verifying payment:", reference);
+      try {
+        const result = await verifyPayment(reference);
+        console.log("[Verify Page] Verification result:", result);
+
+        if (result.success) {
+          // Trigger a refetch to get updated status
+          refetch();
+        }
+      } catch (err) {
+        console.error("[Verify Page] Verification error:", err);
+      }
+    };
+
+    // Wait 2 seconds before manual verification to give webhook a chance
+    const timer = setTimeout(verifyManually, 2000);
+    return () => clearTimeout(timer);
+  }, [reference, orderId, router, refetch]);
 
   useEffect(() => {
     if (data?.order) {
@@ -113,17 +137,13 @@ function PaymentVerifyContent() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full text-center">
         {/* Animated Icon */}
-        <div
-          className={`w-32 h-32 bg-${config.color}-100 rounded-full flex items-center justify-center mx-auto mb-8 relative`}
-        >
+        <div className="w-32 h-32 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-8 relative">
           <Icon
-            className={`w-16 h-16 text-${config.color}-600 ${Icon === Loader2 ? "animate-spin" : ""}`}
+            className={`w-16 h-16 text-amber-600 ${Icon === Loader2 ? "animate-spin" : ""}`}
           />
 
           {/* Pulse animation */}
-          <div
-            className={`absolute inset-0 bg-${config.color}-100 rounded-full animate-ping opacity-20`}
-          ></div>
+          <div className="absolute inset-0 bg-amber-100 rounded-full animate-ping opacity-20"></div>
         </div>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
