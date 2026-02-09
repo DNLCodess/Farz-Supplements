@@ -2,7 +2,7 @@
 
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useOrderStatus } from "@/hooks/useOrders";
+import { useOrderStatus } from "@/hooks/use-orders";
 import { Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 function PaymentVerifyContent() {
