@@ -193,7 +193,7 @@ export async function signIn(formData) {
         email: authData.user.email,
         ...customer,
       },
-      redirectTo: isAdmin ? "/admin" : "/profile",
+      redirectTo: isAdmin ? "/admin/dashboard" : "/profile",
     };
   } catch (error) {
     console.error("Signin error:", error);

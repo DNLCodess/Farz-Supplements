@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { toast } from "sonner";
 
 export const useCart = create(
@@ -141,6 +141,10 @@ export const useCart = create(
     {
       name: "farz-cart-storage",
       version: 1,
+      // ✅ THIS IS THE IMPORTANT FIX
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined" ? localStorage : undefined,
+      ),
     },
   ),
 );

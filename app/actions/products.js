@@ -1,107 +1,122 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabaseAdmin } from "@/lib/supabase/server";
-import {
-  uploadProductImage,
-  uploadProductImages,
-  deleteProductImages,
-} from "@/lib/utils/imageUpload";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
-/**
- * Create a new product with image upload to Supabase Storage
- * Used for: Admin product creation form
- */
-export async function createProduct(formData) {
+export async function getProducts({
+  page = 1,
+  limit = 20,
+  search = "",
+  category = null,
+  status = null,
+}) {
   try {
-    // Extract basic data
-    const name = formData.get("name");
-    const slug = formData.get("slug") || generateSlug(name);
+    const offset = (page - 1) * limit;
 
-    // Validate required fields first
-    if (!name || !formData.get("price") || !formData.get("category_id")) {
-      return {
-        success: false,
-        error: "Name, price, and category are required",
-      };
+    let query = supabaseAdmin.from("products").select(
+      `
+        *,
+        category:categories(id, name, slug)
+      `,
+      { count: "exact" },
+    );
+
+    if (search) {
+      query = query.or(
+        `name.ilike.%${search}%,description.ilike.%${search}%,sku.ilike.%${search}%`,
+      );
     }
 
-    // Check for duplicate slug
-    const { data: existingProduct } = await supabaseAdmin
-      .from("products")
-      .select("id")
-      .eq("slug", slug)
-      .single();
-
-    if (existingProduct) {
-      return {
-        success: false,
-        error: "A product with this slug already exists",
-      };
+    if (category) {
+      query = query.eq("category_id", category);
     }
 
-    // Handle image uploads to Supabase Storage
-    const imageUrls = [];
-    const imageFiles = formData.getAll("images"); // Get all image files from form
-
-    // Upload images to product-images bucket
-    for (const file of imageFiles) {
-      if (file && file.size > 0) {
-        try {
-          const imageUrl = await uploadProductImage(file, "products");
-          imageUrls.push(imageUrl);
-        } catch (uploadError) {
-          console.error("Failed to upload image:", uploadError);
-          // Continue with other images even if one fails
-        }
-      }
+    if (status !== null) {
+      query = query.eq("is_active", status === "active");
     }
 
-    // Fallback: If no images were uploaded but URLs provided (for external images or seeding)
-    const externalImageUrls = formData.get("imageUrls");
-    if (imageUrls.length === 0 && externalImageUrls) {
-      try {
-        const parsedUrls = JSON.parse(externalImageUrls);
-        imageUrls.push(...parsedUrls);
-      } catch (e) {
-        console.error("Failed to parse image URLs:", e);
-      }
-    }
+    query = query
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
 
-    // Prepare product data
-    const productData = {
-      name,
-      slug,
-      description: formData.get("description") || "",
-      short_description: formData.get("short_description") || "",
-      category_id: formData.get("category_id"),
-      price: parseFloat(formData.get("price")),
-      compare_at_price: formData.get("compare_at_price")
-        ? parseFloat(formData.get("compare_at_price"))
-        : null,
-      sku: formData.get("sku") || generateSKU(),
-      stock_quantity: parseInt(formData.get("stock_quantity") || "0"),
-      low_stock_threshold: parseInt(formData.get("low_stock_threshold") || "5"),
-      images: imageUrls, // Array of Supabase Storage URLs
-      is_featured: formData.get("is_featured") === "true",
-      is_active: formData.get("is_active") !== "false", // Default to true
-      meta_title: formData.get("meta_title") || name,
-      meta_description:
-        formData.get("meta_description") ||
-        formData.get("short_description") ||
-        "",
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    return {
+      products: data || [],
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+        hasMore: offset + limit < (count || 0),
+      },
     };
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    throw error;
+  }
+}
 
-    // Insert product
+export async function getProductById(id) {
+  try {
     const { data, error } = await supabaseAdmin
       .from("products")
-      .insert([productData])
+      .select(
+        `
+        *,
+        category:categories(id, name, slug)
+      `,
+      )
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    throw error;
+  }
+}
+
+export async function createProduct(formData) {
+  try {
+    const productData = {
+      name: formData.name,
+      slug:
+        formData.slug ||
+        formData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      description: formData.description,
+      short_description: formData.short_description,
+      price: parseFloat(formData.price),
+      compare_at_price: formData.compare_at_price
+        ? parseFloat(formData.compare_at_price)
+        : null,
+      cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
+      sku: formData.sku || generateSKU(),
+      barcode: formData.barcode || null,
+      category_id: formData.category_id || null,
+      stock_quantity: parseInt(formData.stock_quantity) || 0,
+      low_stock_threshold: parseInt(formData.low_stock_threshold) || 10,
+      weight: formData.weight ? parseFloat(formData.weight) : null,
+      dimensions: formData.dimensions || null,
+      images: formData.images || [],
+      is_active: formData.is_active !== false,
+      is_featured: formData.is_featured || false,
+      meta_title: formData.meta_title || formData.name,
+      meta_description:
+        formData.meta_description || formData.short_description || "",
+    };
+
+    const { data, error } = await supabaseAdmin
+      .from("products")
+      .insert(productData)
       .select()
       .single();
 
     if (error) throw error;
 
-    // Revalidate pages
     revalidatePath("/admin/products");
     revalidatePath("/products");
     revalidatePath("/");
@@ -120,115 +135,45 @@ export async function createProduct(formData) {
   }
 }
 
-/**
- * Update an existing product with image upload support
- * Used for: Admin product edit form
- */
-export async function updateProduct(productId, formData) {
+export async function updateProduct(id, formData) {
   try {
-    const name = formData.get("name");
-    const slug = formData.get("slug");
-
-    // Check for duplicate slug (excluding current product)
-    const { data: existingProduct } = await supabaseAdmin
-      .from("products")
-      .select("id")
-      .eq("slug", slug)
-      .neq("id", productId)
-      .single();
-
-    if (existingProduct) {
-      return {
-        success: false,
-        error: "A product with this slug already exists",
-      };
-    }
-
-    // Get existing product to manage images
-    const { data: currentProduct } = await supabaseAdmin
-      .from("products")
-      .select("images, slug")
-      .eq("id", productId)
-      .single();
-
-    let imageUrls = [];
-
-    // Check if user wants to keep existing images
-    const keepExistingImages = formData.get("keepExistingImages") === "true";
-
-    if (keepExistingImages) {
-      imageUrls = [...(currentProduct?.images || [])];
-    }
-
-    // Handle new image uploads
-    const newImageFiles = formData.getAll("images");
-
-    for (const file of newImageFiles) {
-      if (file && file.size > 0) {
-        try {
-          const imageUrl = await uploadProductImage(file, "products");
-          imageUrls.push(imageUrl);
-        } catch (uploadError) {
-          console.error("Failed to upload image:", uploadError);
-        }
-      }
-    }
-
-    // If replacing all images, delete old ones from storage
-    if (!keepExistingImages && currentProduct?.images?.length > 0) {
-      try {
-        await deleteProductImages(currentProduct.images);
-      } catch (deleteError) {
-        console.error("Failed to delete old images:", deleteError);
-        // Continue even if deletion fails
-      }
-    }
-
-    // Allow manual image URLs (for external images or seeding)
-    const externalImageUrls = formData.get("imageUrls");
-    if (externalImageUrls) {
-      try {
-        const parsedUrls = JSON.parse(externalImageUrls);
-        imageUrls.push(...parsedUrls);
-      } catch (e) {
-        console.error("Failed to parse image URLs:", e);
-      }
-    }
-
     const productData = {
-      name,
-      slug,
-      description: formData.get("description") || "",
-      short_description: formData.get("short_description") || "",
-      category_id: formData.get("category_id"),
-      price: parseFloat(formData.get("price")),
-      compare_at_price: formData.get("compare_at_price")
-        ? parseFloat(formData.get("compare_at_price"))
+      name: formData.name,
+      slug: formData.slug,
+      description: formData.description,
+      short_description: formData.short_description,
+      price: parseFloat(formData.price),
+      compare_at_price: formData.compare_at_price
+        ? parseFloat(formData.compare_at_price)
         : null,
-      sku: formData.get("sku"),
-      stock_quantity: parseInt(formData.get("stock_quantity")),
-      low_stock_threshold: parseInt(formData.get("low_stock_threshold")) || 5,
-      images: imageUrls,
-      is_featured: formData.get("is_featured") === "true",
-      is_active: formData.get("is_active") === "true",
-      meta_title: formData.get("meta_title") || name,
-      meta_description: formData.get("meta_description") || "",
+      cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
+      sku: formData.sku,
+      barcode: formData.barcode || null,
+      category_id: formData.category_id || null,
+      stock_quantity: parseInt(formData.stock_quantity),
+      low_stock_threshold: parseInt(formData.low_stock_threshold),
+      weight: formData.weight ? parseFloat(formData.weight) : null,
+      dimensions: formData.dimensions || null,
+      images: formData.images || [],
+      is_active: formData.is_active,
+      is_featured: formData.is_featured,
+      meta_title: formData.meta_title || formData.name,
+      meta_description: formData.meta_description || "",
+      updated_at: new Date().toISOString(),
     };
 
-    // Update product
     const { data, error } = await supabaseAdmin
       .from("products")
       .update(productData)
-      .eq("id", productId)
+      .eq("id", id)
       .select()
       .single();
 
     if (error) throw error;
 
-    // Revalidate pages
     revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/${id}`);
     revalidatePath("/products");
-    revalidatePath(`/products/${slug}`);
     revalidatePath("/");
 
     return {
@@ -245,21 +190,16 @@ export async function updateProduct(productId, formData) {
   }
 }
 
-/**
- * Delete a product (soft delete by setting is_active to false)
- * Used for: Admin product management
- */
-export async function deleteProduct(productId) {
+export async function deleteProduct(id) {
   try {
     // Soft delete - set is_active to false
     const { error } = await supabaseAdmin
       .from("products")
       .update({ is_active: false })
-      .eq("id", productId);
+      .eq("id", id);
 
     if (error) throw error;
 
-    // Revalidate pages
     revalidatePath("/admin/products");
     revalidatePath("/products");
     revalidatePath("/");
@@ -277,51 +217,15 @@ export async function deleteProduct(productId) {
   }
 }
 
-/**
- * Hard delete a product (permanent deletion)
- * Used for: Admin - permanent removal
- */
-export async function permanentlyDeleteProduct(productId) {
-  try {
-    const { error } = await supabaseAdmin
-      .from("products")
-      .delete()
-      .eq("id", productId);
-
-    if (error) throw error;
-
-    // Revalidate pages
-    revalidatePath("/admin/products");
-    revalidatePath("/products");
-    revalidatePath("/");
-
-    return {
-      success: true,
-      message: "Product permanently deleted",
-    };
-  } catch (error) {
-    console.error("Error permanently deleting product:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to permanently delete product",
-    };
-  }
-}
-
-/**
- * Bulk update product status
- * Used for: Admin - activate/deactivate multiple products
- */
 export async function bulkUpdateProductStatus(productIds, isActive) {
   try {
     const { error } = await supabaseAdmin
       .from("products")
-      .update({ is_active: isActive })
+      .update({ is_active: isActive, updated_at: new Date().toISOString() })
       .in("id", productIds);
 
     if (error) throw error;
 
-    // Revalidate pages
     revalidatePath("/admin/products");
     revalidatePath("/products");
     revalidatePath("/");
@@ -339,81 +243,43 @@ export async function bulkUpdateProductStatus(productIds, isActive) {
   }
 }
 
-/**
- * Update product stock quantity
- * Used for: Quick stock updates in admin
- */
-export async function updateProductStock(productId, quantity) {
+export async function getProductStats() {
   try {
-    const { data, error } = await supabaseAdmin
-      .from("products")
-      .update({ stock_quantity: quantity })
-      .eq("id", productId)
-      .select()
-      .single();
+    const [
+      { count: totalProducts },
+      { count: activeProducts },
+      { count: lowStockProducts },
+      { data: allProducts },
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("products")
+        .select("*", { count: "exact", head: true }),
+      supabaseAdmin
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .eq("is_active", true),
+      supabaseAdmin
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .filter("stock_quantity", "lte", "low_stock_threshold"),
+      supabaseAdmin.from("products").select("price, stock_quantity"),
+    ]);
 
-    if (error) throw error;
-
-    // Revalidate product pages
-    revalidatePath("/admin/products");
-    revalidatePath("/products");
+    const inventoryValue = (allProducts || []).reduce(
+      (sum, p) => sum + p.price * p.stock_quantity,
+      0,
+    );
 
     return {
-      success: true,
-      data,
-      message: "Stock updated successfully",
+      total_products: totalProducts || 0,
+      active_products: activeProducts || 0,
+      low_stock_products: lowStockProducts || 0,
+      inventory_value: inventoryValue,
     };
   } catch (error) {
-    console.error("Error updating stock:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to update stock",
-    };
+    console.error("Error fetching product stats:", error);
+    throw error;
   }
-}
-
-/**
- * Toggle product featured status
- * Used for: Quick feature/unfeature in admin
- */
-export async function toggleProductFeatured(productId, isFeatured) {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from("products")
-      .update({ is_featured: isFeatured })
-      .eq("id", productId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Revalidate pages
-    revalidatePath("/admin/products");
-    revalidatePath("/products");
-    revalidatePath("/");
-
-    return {
-      success: true,
-      data,
-      message: `Product ${isFeatured ? "featured" : "unfeatured"}`,
-    };
-  } catch (error) {
-    console.error("Error toggling featured:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to update featured status",
-    };
-  }
-}
-
-// Helper function to generate slug from name
-function generateSlug(name) {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }
 
 // Helper function to generate SKU

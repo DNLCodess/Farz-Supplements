@@ -15,6 +15,7 @@ import {
   LogOut,
   Home,
   Bell,
+  CreditCard,
 } from "lucide-react";
 
 const navigation = [
@@ -27,6 +28,11 @@ const navigation = [
     name: "Products",
     href: "/admin/products",
     icon: Package,
+  },
+  {
+    name: "Payments",
+    href: "/admin/payments",
+    icon: CreditCard,
   },
   {
     name: "Orders",
