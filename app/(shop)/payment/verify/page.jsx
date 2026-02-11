@@ -100,7 +100,7 @@ function PaymentVerifyContent() {
             Verification Error
           </h1>
           <p className="text-lg text-gray-600 mb-8">
-            We couldn't verify your payment. Please contact support.
+            We couldn&apos;t verify your payment. Please contact support.
           </p>
           <button
             onClick={() => router.push("/")}
@@ -171,19 +171,19 @@ function PaymentVerifyContent() {
         {/* Info Box */}
         <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5 text-left">
           <p className="text-sm text-blue-900 font-semibold mb-2">
-            What's happening?
+            What&lsquo;s happening?
           </p>
           <ul className="text-sm text-blue-800 space-y-2">
             <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-600" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-blue-600" />
               <span>Your order has been created</span>
             </li>
             <li className="flex items-start gap-2">
-              <Loader2 className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-600 animate-spin" />
+              <Loader2 className="w-4 h-4 shrink-0 mt-0.5 text-blue-600 animate-spin" />
               <span>Waiting for payment confirmation from Paystack</span>
             </li>
             <li className="flex items-start gap-2">
-              <Clock className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-600" />
+              <Clock className="w-4 h-4 shrink-0 mt-0.5 text-blue-600" />
               <span>This usually takes less than 30 seconds</span>
             </li>
           </ul>
@@ -191,7 +191,7 @@ function PaymentVerifyContent() {
 
         {/* Warning */}
         <p className="text-sm text-gray-500 mt-6">
-          Please don't close this page or press the back button
+          Please don&lsquo;t close this page or press the back button
         </p>
       </div>
     </div>

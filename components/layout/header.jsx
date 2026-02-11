@@ -12,8 +12,14 @@ import {
   Search,
   Phone,
   ChevronDown,
+  LogOut,
+  UserCircle,
+  Settings,
+  Package,
+  Shield,
 } from "lucide-react";
 import { useCartStore } from "@/store/cart";
+import { useAuth, useSignOut } from "@/hooks/use-auth";
 import MegaMenu from "./mega-menu";
 import MobileNav from "./mobile-nav";
 import SearchBar from "@/components/common/search-bar";
@@ -24,10 +30,13 @@ export default function Header() {
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [miniCartOpen, setMiniCartOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
   const cartItemsCount = useCartStore((state) => state.getTotalItems());
+  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { mutate: signOut, isPending: isSigningOut } = useSignOut();
 
   // Handle scroll for sticky header shadow
   useEffect(() => {
@@ -44,6 +53,7 @@ export default function Header() {
     setMegaMenuOpen(false);
     setSearchOpen(false);
     setMiniCartOpen(false);
+    setAccountMenuOpen(false);
   }, [pathname]);
 
   // Prevent body scroll when mobile menu, search, or mini cart is open
@@ -64,11 +74,28 @@ export default function Header() {
       if (e.key === "Escape") {
         if (searchOpen) setSearchOpen(false);
         if (miniCartOpen) setMiniCartOpen(false);
+        if (accountMenuOpen) setAccountMenuOpen(false);
       }
     };
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [searchOpen, miniCartOpen]);
+  }, [searchOpen, miniCartOpen, accountMenuOpen]);
+
+  // Close account menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (accountMenuOpen && !e.target.closest(".account-menu-container")) {
+        setAccountMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [accountMenuOpen]);
+
+  const handleSignOut = () => {
+    signOut();
+    setAccountMenuOpen(false);
+  };
 
   return (
     <>
@@ -86,6 +113,11 @@ export default function Header() {
               </span>
             </div>
             <div className="flex items-center gap-4">
+              {isAuthenticated && (
+                <span className="text-green-100">
+                  Welcome, {user?.first_name}!
+                </span>
+              )}
               <Link
                 href="/track-order"
                 className="hover:text-green-100 transition-colors"
@@ -214,14 +246,109 @@ export default function Header() {
                   <Heart className="w-5 h-5" />
                 </Link>
 
-                {/* Account */}
-                <Link
-                  href="/login"
-                  className="hidden sm:flex p-2 text-gray-700 hover:text-green-900 transition-colors"
-                  aria-label="Account"
-                >
-                  <User className="w-5 h-5" />
-                </Link>
+                {/* Account - Conditional Rendering */}
+                {isAuthenticated ? (
+                  <div className="relative account-menu-container">
+                    <button
+                      onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                      className="hidden sm:flex items-center gap-2 p-2 text-gray-700 hover:text-green-900 transition-colors"
+                      aria-label="Account menu"
+                    >
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-bold text-green-900">
+                          {user?.first_name?.[0]}
+                          {user?.last_name?.[0]}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${accountMenuOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {/* Account Dropdown Menu */}
+                    {accountMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                        {/* User Info */}
+                        <div className="px-4 py-3 border-b border-gray-200">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {user?.first_name} {user?.last_name}
+                          </p>
+                          <p className="text-xs text-gray-600 mt-0.5">
+                            {user?.email}
+                          </p>
+                          {isAdmin && (
+                            <span className="inline-flex items-center gap-1 mt-2 px-2 py-1 bg-green-100 text-green-900 text-xs font-medium rounded-full">
+                              <Shield className="w-3 h-3" />
+                              Admin
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Menu Items */}
+                        <div className="py-2">
+                          <Link
+                            href="/profile"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            onClick={() => setAccountMenuOpen(false)}
+                          >
+                            <UserCircle className="w-4 h-4" />
+                            My Profile
+                          </Link>
+                          <Link
+                            href="/profile?tab=orders"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            onClick={() => setAccountMenuOpen(false)}
+                          >
+                            <Package className="w-4 h-4" />
+                            My Orders
+                          </Link>
+                          <Link
+                            href="/profile?tab=addresses"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            onClick={() => setAccountMenuOpen(false)}
+                          >
+                            <Settings className="w-4 h-4" />
+                            Settings
+                          </Link>
+
+                          {isAdmin && (
+                            <>
+                              <div className="my-2 border-t border-gray-200"></div>
+                              <Link
+                                href="/admin"
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-green-900 hover:bg-green-50 transition-colors font-medium"
+                                onClick={() => setAccountMenuOpen(false)}
+                              >
+                                <Shield className="w-4 h-4" />
+                                Admin Dashboard
+                              </Link>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Sign Out */}
+                        <div className="border-t border-gray-200 pt-2">
+                          <button
+                            onClick={handleSignOut}
+                            disabled={isSigningOut}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full disabled:opacity-50"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            {isSigningOut ? "Signing out..." : "Sign Out"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="hidden sm:flex p-2 text-gray-700 hover:text-green-900 transition-colors"
+                    aria-label="Account"
+                  >
+                    <User className="w-5 h-5" />
+                  </Link>
+                )}
 
                 {/* Cart - Opens MiniCart */}
                 <button
