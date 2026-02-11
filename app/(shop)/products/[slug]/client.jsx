@@ -17,9 +17,15 @@ import {
   ShieldCheck,
   RotateCcw,
   Package,
+  Loader2,
 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
-import { useWishlist } from "@/hooks/use-wishlist";
+import {
+  useAddToWishlist,
+  useRemoveFromWishlist,
+  useIsInWishlist,
+} from "@/hooks/use-wishlist";
+import { useAuth } from "@/hooks/use-auth";
 import Breadcrumbs from "@/components/common/ui/bread-crumbs";
 import StarRating from "@/components/common/ui/star-rating";
 import QuantitySelector from "@/components/common/ui/quantity-selector";
@@ -27,7 +33,9 @@ import AddToCartButton from "@/components/shared/cart/add-to-cart-button";
 import ShareButton from "@/components/common/ui/share-button";
 import ProductReviews from "@/components/shared/product/reviews";
 import RelatedProducts from "@/components/shared/product/related-products";
+
 import { formatPrice } from "@/lib/utils";
+import WishlistToast from "@/components/shared/wishlist/toast";
 
 export default function ProductDetailClient({
   product,
@@ -39,9 +47,21 @@ export default function ProductDetailClient({
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showWishlistToast, setShowWishlistToast] = useState(false);
+  const [wishlistAction, setWishlistAction] = useState(null);
 
   const { addToCart, isLoading: cartLoading } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { user } = useAuth();
+
+  // Wishlist hooks
+  const isInWishlistFn = useIsInWishlist();
+  const inWishlist = isInWishlistFn(product.id);
+  const { mutate: addToWishlist, isPending: isAddingToWishlist } =
+    useAddToWishlist();
+  const { mutate: removeFromWishlist, isPending: isRemovingFromWishlist } =
+    useRemoveFromWishlist();
+
+  const isWishlistPending = isAddingToWishlist || isRemovingFromWishlist;
 
   // Ensure we have valid image URLs, filter out empty/invalid ones
   const validImages =
@@ -69,8 +89,6 @@ export default function ProductDetailClient({
 
   const isOutOfStock = product.stock_quantity <= 0;
 
-  const inWishlist = isInWishlist(product.id);
-
   const handleAddToCart = async () => {
     if (isOutOfStock) return;
 
@@ -82,10 +100,26 @@ export default function ProductDetailClient({
   };
 
   const handleToggleWishlist = () => {
+    // Redirect to login if not authenticated
+    if (!user) {
+      router.push("/login?redirect=" + window.location.pathname);
+      return;
+    }
+
     if (inWishlist) {
-      removeFromWishlist(product.id);
+      removeFromWishlist(product.id, {
+        onSuccess: () => {
+          setWishlistAction("removed");
+          setShowWishlistToast(true);
+        },
+      });
     } else {
-      addToWishlist(product);
+      addToWishlist(product.id, {
+        onSuccess: () => {
+          setWishlistAction("added");
+          setShowWishlistToast(true);
+        },
+      });
     }
   };
 
@@ -305,18 +339,23 @@ export default function ProductDetailClient({
 
                   <button
                     onClick={handleToggleWishlist}
-                    className={`w-12 h-12 rounded-md border-2 flex items-center justify-center transition-colors ${
+                    disabled={isWishlistPending}
+                    className={`w-12 h-12 rounded-md border-2 flex items-center justify-center transition-colors disabled:opacity-50 ${
                       inWishlist
-                        ? "border-red-600 bg-red-50 text-red-600"
-                        : "border-neutral-300 hover:border-neutral-400 text-neutral-600"
+                        ? "border-green-900 bg-green-900 text-white hover:bg-green-800"
+                        : "border-neutral-300 hover:border-red-400 hover:bg-red-50 text-neutral-600"
                     }`}
                     aria-label={
                       inWishlist ? "Remove from wishlist" : "Add to wishlist"
                     }
                   >
-                    <Heart
-                      className={`w-5 h-5 ${inWishlist ? "fill-current" : ""}`}
-                    />
+                    {isWishlistPending ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Heart
+                        className={`w-5 h-5 ${inWishlist ? "fill-current" : ""}`}
+                      />
+                    )}
                   </button>
 
                   <ShareButton
@@ -459,6 +498,13 @@ export default function ProductDetailClient({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Wishlist Toast Notification */}
+      <WishlistToast
+        isVisible={showWishlistToast}
+        onClose={() => setShowWishlistToast(false)}
+        action={wishlistAction}
+      />
     </div>
   );
 }

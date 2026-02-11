@@ -8,13 +8,19 @@ import { ShoppingCart, X, Trash2, ArrowRight, Package } from "lucide-react";
 
 export default function MiniCart({ isOpen, onClose }) {
   const [imageErrors, setImageErrors] = useState({});
-  const { items, removeItem, getTotalPrice, getTotalItems } = useCartStore();
+
+  // Get cart store values and methods with correct names
+  const items = useCartStore((state) => state.items);
+  const removeFromCart = useCartStore((state) => state.removeFromCart);
+  const getCartTotal = useCartStore((state) => state.getCartTotal);
+  const getTotalItems = useCartStore((state) => state.getTotalItems);
 
   const handleImageError = (productId) => {
     setImageErrors((prev) => ({ ...prev, [productId]: true }));
   };
 
-  const total = getTotalPrice();
+  const total = getCartTotal();
+  const itemCount = getTotalItems();
 
   if (!isOpen) return null;
 
@@ -68,10 +74,8 @@ export default function MiniCart({ isOpen, onClose }) {
             {/* Item Count */}
             <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
               <p className="text-base text-gray-700">
-                <span className="font-bold text-gray-900">
-                  {getTotalItems()}
-                </span>{" "}
-                {getTotalItems() === 1 ? "item" : "items"} in your cart
+                <span className="font-bold text-gray-900">{itemCount}</span>{" "}
+                {itemCount === 1 ? "item" : "items"} in your cart
               </p>
             </div>
 
@@ -79,25 +83,26 @@ export default function MiniCart({ isOpen, onClose }) {
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {items.map((item) => (
                 <div
-                  key={item.id}
+                  key={item.product_id}
                   className="flex gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-green-500 transition-colors"
                 >
                   {/* Product Image */}
                   <Link
-                    href={`/products/${item.slug}`}
+                    href={`/products/${item.product?.slug}`}
                     onClick={onClose}
                     className="relative w-20 h-20 flex-shrink-0 bg-white rounded-lg overflow-hidden"
                   >
-                    {!imageErrors[item.id] ? (
+                    {!imageErrors[item.product_id] ? (
                       <Image
                         src={
-                          item.images?.[0] || "/images/product-placeholder.png"
+                          item.product?.images?.[0] ||
+                          "/images/product-placeholder.png"
                         }
-                        alt={item.name}
+                        alt={item.product?.name || "Product"}
                         fill
                         className="object-cover"
                         sizes="80px"
-                        onError={() => handleImageError(item.id)}
+                        onError={() => handleImageError(item.product_id)}
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-3xl">
@@ -109,23 +114,26 @@ export default function MiniCart({ isOpen, onClose }) {
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
                     <Link
-                      href={`/products/${item.slug}`}
+                      href={`/products/${item.product?.slug}`}
                       onClick={onClose}
                       className="font-bold text-gray-900 hover:text-green-900 transition-colors line-clamp-2 text-base mb-1 block"
                     >
-                      {item.name}
+                      {item.product?.name}
                     </Link>
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-base font-bold text-green-900">
-                          ₦{item.price.toLocaleString()}
+                          ₦
+                          {parseFloat(
+                            item.product?.price || 0,
+                          ).toLocaleString()}
                         </p>
                         <p className="text-sm text-gray-600">
                           Qty: {item.quantity}
                         </p>
                       </div>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeFromCart(item.product_id)}
                         className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         aria-label="Remove item"
                       >

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { useAuth, useSignOut } from "@/hooks/use-auth";
+import { useWishlistCount } from "@/hooks/use-wishlist";
 import MegaMenu from "./mega-menu";
 import MobileNav from "./mobile-nav";
 import SearchBar from "@/components/common/search-bar";
@@ -35,6 +36,7 @@ export default function Header() {
   const pathname = usePathname();
 
   const cartItemsCount = useCartStore((state) => state.getTotalItems());
+  const wishlistCount = useWishlistCount();
   const { user, isAuthenticated, isAdmin } = useAuth();
   const { mutate: signOut, isPending: isSigningOut } = useSignOut();
 
@@ -237,13 +239,18 @@ export default function Header() {
                   <Search className="w-5 h-5" />
                 </button>
 
-                {/* Wishlist */}
+                {/* Wishlist with Counter */}
                 <Link
-                  href="/wishlist"
+                  href="/profile?tab=wishlist"
                   className="hidden sm:flex p-2 text-gray-700 hover:text-green-900 transition-colors relative"
                   aria-label="Wishlist"
                 >
                   <Heart className="w-5 h-5" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-green-900 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {wishlistCount > 9 ? "9+" : wishlistCount}
+                    </span>
+                  )}
                 </Link>
 
                 {/* Account - Conditional Rendering */}
@@ -301,6 +308,21 @@ export default function Header() {
                           >
                             <Package className="w-4 h-4" />
                             My Orders
+                          </Link>
+                          <Link
+                            href="/profile?tab=wishlist"
+                            className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            onClick={() => setAccountMenuOpen(false)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Heart className="w-4 h-4" />
+                              Wishlist
+                            </div>
+                            {wishlistCount > 0 && (
+                              <span className="bg-green-100 text-green-900 text-xs font-bold rounded-full px-2 py-0.5">
+                                {wishlistCount}
+                              </span>
+                            )}
                           </Link>
                           <Link
                             href="/profile?tab=addresses"

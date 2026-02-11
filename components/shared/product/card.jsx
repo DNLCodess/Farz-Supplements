@@ -10,18 +10,41 @@ import {
   CheckCircle2,
   AlertCircle,
   XCircle,
+  Loader2,
 } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { usePrefetchProduct } from "@/hooks/use-products";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  useAddToWishlist,
+  useRemoveFromWishlist,
+  useIsInWishlist,
+} from "@/hooks/use-wishlist";
+import { useRouter } from "next/navigation";
 import CartToast from "../cart/cart-toast";
+import WishlistToast from "../wishlist/toast";
 
 export default function ProductCard({ product }) {
+  const router = useRouter();
   const [imageError, setImageError] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [showWishlistToast, setShowWishlistToast] = useState(false);
+  const [wishlistAction, setWishlistAction] = useState(null);
 
   const addItem = useCartStore((state) => state.addItem);
   const prefetchProduct = usePrefetchProduct();
+  const { user } = useAuth();
+
+  // Wishlist hooks
+  const isInWishlistFn = useIsInWishlist();
+  const isInWishlist = isInWishlistFn(product.id);
+  const { mutate: addToWishlist, isPending: isAddingToWishlist } =
+    useAddToWishlist();
+  const { mutate: removeFromWishlist, isPending: isRemovingFromWishlist } =
+    useRemoveFromWishlist();
+
+  const isWishlistPending = isAddingToWishlist || isRemovingFromWishlist;
 
   // Get first image or use placeholder
   const imageUrl = product.images?.[0] || "/images/product-placeholder.png";
@@ -57,6 +80,33 @@ export default function ProductCard({ product }) {
       setIsAddingToCart(false);
       setShowToast(true);
     }, 400);
+  };
+
+  const handleWishlistClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Redirect to login if not authenticated
+    if (!user) {
+      router.push("/login?redirect=" + window.location.pathname);
+      return;
+    }
+
+    if (isInWishlist) {
+      removeFromWishlist(product.id, {
+        onSuccess: () => {
+          setWishlistAction("removed");
+          setShowWishlistToast(true);
+        },
+      });
+    } else {
+      addToWishlist(product.id, {
+        onSuccess: () => {
+          setWishlistAction("added");
+          setShowWishlistToast(true);
+        },
+      });
+    }
   };
 
   const handleMouseEnter = () => {
@@ -106,15 +156,28 @@ export default function ProductCard({ product }) {
 
           {/* Wishlist Button - Always Visible, Larger */}
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              // Wishlist functionality
-            }}
-            className="absolute top-3 left-3 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors border-2 border-gray-200 hover:border-red-300"
-            aria-label="Add to wishlist"
+            onClick={handleWishlistClick}
+            disabled={isWishlistPending}
+            className={`absolute top-3 left-3 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-colors border-2 disabled:opacity-50 ${
+              isInWishlist
+                ? "bg-green-900 border-green-900 hover:bg-green-800"
+                : "bg-white border-gray-200 hover:bg-red-50 hover:border-red-300"
+            }`}
+            aria-label={
+              isInWishlist ? "Remove from wishlist" : "Add to wishlist"
+            }
           >
-            <Heart className="w-6 h-6 text-gray-600 hover:text-red-500" />
+            {isWishlistPending ? (
+              <Loader2 className="w-6 h-6 text-gray-600 animate-spin" />
+            ) : (
+              <Heart
+                className={`w-6 h-6 transition-colors ${
+                  isInWishlist
+                    ? "text-white fill-current"
+                    : "text-gray-600 hover:text-red-500"
+                }`}
+              />
+            )}
           </button>
         </div>
 
@@ -223,6 +286,13 @@ export default function ProductCard({ product }) {
         isVisible={showToast}
         onClose={() => setShowToast(false)}
         productName={product.name}
+      />
+
+      {/* Wishlist Toast Notification */}
+      <WishlistToast
+        isVisible={showWishlistToast}
+        onClose={() => setShowWishlistToast(false)}
+        action={wishlistAction}
       />
     </>
   );

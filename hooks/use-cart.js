@@ -119,6 +119,12 @@ export const useCart = create(
         return items.reduce((count, item) => count + item.quantity, 0);
       },
 
+      // Get total items (alias for getCartCount - used by Header)
+      getTotalItems: () => {
+        const { items } = get();
+        return items.reduce((count, item) => count + item.quantity, 0);
+      },
+
       // Check if item is in cart
       isInCart: (productId) => {
         const { items } = get();
@@ -138,3 +144,6 @@ export const useCart = create(
     },
   ),
 );
+
+// Export the hook that components can use
+export const useCartStore = useCart;

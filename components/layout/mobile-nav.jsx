@@ -15,6 +15,8 @@ import {
   Heart,
   Package,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useWishlistCount } from "@/hooks/use-wishlist";
 
 const categories = [
   { name: "Herbal Liquids", slug: "herbal-liquids", icon: "🧪" },
@@ -32,6 +34,8 @@ const categories = [
 export default function MobileNav({ isOpen, onClose }) {
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
+  const wishlistCount = useWishlistCount();
 
   return (
     <>
@@ -165,16 +169,23 @@ export default function MobileNav({ isOpen, onClose }) {
 
           {/* Account Links */}
           <Link
-            href="/wishlist"
+            href="/profile?tab=wishlist"
             onClick={onClose}
-            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 transition-colors"
+            className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-green-50 transition-colors"
           >
-            <Heart className="w-5 h-5" />
-            <span className="font-medium">Wishlist</span>
+            <div className="flex items-center gap-3">
+              <Heart className="w-5 h-5" />
+              <span className="font-medium">Wishlist</span>
+            </div>
+            {wishlistCount > 0 && (
+              <span className="bg-green-900 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                {wishlistCount > 9 ? "9+" : wishlistCount}
+              </span>
+            )}
           </Link>
 
           <Link
-            href="/orders"
+            href="/profile?tab=orders"
             onClick={onClose}
             className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 transition-colors"
           >
@@ -183,12 +194,14 @@ export default function MobileNav({ isOpen, onClose }) {
           </Link>
 
           <Link
-            href="/login"
+            href={isAuthenticated ? "/profile" : "/login"}
             onClick={onClose}
             className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 transition-colors"
           >
             <User className="w-5 h-5" />
-            <span className="font-medium">Account</span>
+            <span className="font-medium">
+              {isAuthenticated ? "My Account" : "Sign In"}
+            </span>
           </Link>
         </nav>
 
