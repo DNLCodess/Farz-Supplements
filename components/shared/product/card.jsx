@@ -32,7 +32,7 @@ export default function ProductCard({ product }) {
   const [showWishlistToast, setShowWishlistToast] = useState(false);
   const [wishlistAction, setWishlistAction] = useState(null);
 
-  const addItem = useCartStore((state) => state.addItem);
+  const addToCart = useCartStore((state) => state.addToCart);
   const prefetchProduct = usePrefetchProduct();
   const { user } = useAuth();
 
@@ -73,7 +73,15 @@ export default function ProductCard({ product }) {
     if (isOutOfStock) return;
 
     setIsAddingToCart(true);
-    addItem(product, 1);
+
+    // Add to cart with proper structure
+    await addToCart({
+      product_id: product.id,
+      product: product,
+      price: product.price,
+      quantity: 1,
+      stock_quantity: product.stock_quantity,
+    });
 
     // Show feedback
     setTimeout(() => {
@@ -118,9 +126,9 @@ export default function ProductCard({ product }) {
       <Link
         href={`/products/${product.slug}`}
         onMouseEnter={handleMouseEnter}
-        className="group bg-white rounded-xl border-2 border-gray-200 overflow-hidden hover:shadow-lg hover:border-green-500 transition-all duration-200 flex flex-col h-full"
+        className="group bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md hover:border-green-600 transition-all duration-200 flex flex-col h-full"
       >
-        {/* Product Image - 4:3 ratio for more content space */}
+        {/* Product Image - 4:3 ratio */}
         <div
           className="relative w-full bg-gray-50 overflow-hidden"
           style={{ paddingBottom: "75%" }}
@@ -130,7 +138,7 @@ export default function ProductCard({ product }) {
               src={imageUrl}
               alt={product.name}
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               onError={() => setImageError(true)}
             />
@@ -140,69 +148,69 @@ export default function ProductCard({ product }) {
             </div>
           )}
 
-          {/* Badges - Top Right, Always Visible */}
+          {/* Badges - Top Right */}
           <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
             {hasDiscount && (
-              <div className="px-3 py-1.5 bg-red-600 text-white text-base font-bold rounded-lg shadow-md">
-                SAVE {discountPercentage}%
+              <div className="px-2.5 py-1 bg-red-600 text-white text-sm font-bold rounded-md shadow-sm">
+                -{discountPercentage}%
               </div>
             )}
             {product.is_featured && (
-              <div className="px-3 py-1.5 bg-green-900 text-white text-sm font-semibold rounded-lg shadow-md">
-                ⭐ Featured
+              <div className="px-2.5 py-1 bg-green-900 text-white text-xs font-semibold rounded-md shadow-sm">
+                Featured
               </div>
             )}
           </div>
 
-          {/* Wishlist Button - Always Visible, Larger */}
+          {/* Wishlist Button */}
           <button
             onClick={handleWishlistClick}
             disabled={isWishlistPending}
-            className={`absolute top-3 left-3 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-colors border-2 disabled:opacity-50 ${
+            className={`absolute top-3 left-3 w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all duration-200 border disabled:opacity-50 ${
               isInWishlist
                 ? "bg-green-900 border-green-900 hover:bg-green-800"
-                : "bg-white border-gray-200 hover:bg-red-50 hover:border-red-300"
+                : "bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300"
             }`}
             aria-label={
               isInWishlist ? "Remove from wishlist" : "Add to wishlist"
             }
           >
             {isWishlistPending ? (
-              <Loader2 className="w-6 h-6 text-gray-600 animate-spin" />
+              <Loader2 className="w-5 h-5 text-gray-600 animate-spin" />
             ) : (
               <Heart
-                className={`w-6 h-6 transition-colors ${
+                className={`w-5 h-5 transition-colors ${
                   isInWishlist
                     ? "text-white fill-current"
-                    : "text-gray-600 hover:text-red-500"
+                    : "text-gray-600 group-hover:text-red-500"
                 }`}
               />
             )}
           </button>
         </div>
 
-        {/* Product Info - More Spacing */}
-        <div className="p-5 flex flex-col flex-1">
-          {/* Category - Larger, Darker */}
+        {/* Product Info */}
+        <div className="p-4 flex flex-col flex-1">
+          {/* Category */}
           {product.category && (
-            <p className="text-sm font-medium text-gray-700 mb-2 uppercase tracking-wider">
+            <p className="text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wide">
               {product.category.name}
             </p>
           )}
 
-          {/* Product Name - Very Large, Bold */}
-          <h3 className="font-bold text-charcoal mb-3 line-clamp-2 min-h-[3.5rem] group-hover:text-green-900 transition-colors text-lg leading-snug">
+          {/* Product Name */}
+          <h3 className="font-semibold text-charcoal mb-2 line-clamp-2 min-h-11 group-hover:text-green-900 transition-colors text-base leading-tight">
             {product.name}
           </h3>
 
-          {/* Rating - Larger Stars */}
+          {/* Rating */}
           {product.avgRating > 0 && (
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-1.5 mb-3">
               <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-5 h-5 ${
+                    className={`w-4 h-4 ${
                       i < Math.round(product.avgRating)
                         ? "fill-yellow-400 text-yellow-400"
                         : "fill-gray-200 text-gray-200"
@@ -210,69 +218,71 @@ export default function ProductCard({ product }) {
                   />
                 ))}
               </div>
-              <span className="text-base font-medium text-gray-700">
+              <span className="text-sm text-gray-600">
                 ({product.reviewCount || 0})
               </span>
             </div>
           )}
 
-          {/* Price - Extra Large, Very Prominent */}
+          {/* Price */}
           <div className="mt-auto">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-3xl font-extrabold text-green-900">
+            <div className="flex items-baseline gap-2 mb-3">
+              <span className="text-2xl font-bold text-green-900">
                 ₦{product.price.toLocaleString()}
               </span>
               {hasDiscount && (
-                <span className="text-lg text-gray-600 line-through font-medium">
+                <span className="text-base text-gray-500 line-through">
                   ₦{product.compare_at_price.toLocaleString()}
                 </span>
               )}
             </div>
 
-            {/* Stock Status - Larger, With Icons */}
-            <div className="mb-4 flex items-center gap-2">
+            {/* Stock Status */}
+            <div className="mb-3 flex items-center gap-1.5">
               {isOutOfStock ? (
                 <>
-                  <XCircle className="w-5 h-5 text-red-600" />
-                  <p className="text-base text-red-600 font-bold">
+                  <XCircle className="w-4 h-4 text-red-600" />
+                  <p className="text-sm text-red-600 font-semibold">
                     Out of Stock
                   </p>
                 </>
               ) : isLowStock ? (
                 <>
-                  <AlertCircle className="w-5 h-5 text-orange-600" />
-                  <p className="text-base text-orange-700 font-bold">
-                    Only {product.stock_quantity} left!
+                  <AlertCircle className="w-4 h-4 text-orange-600" />
+                  <p className="text-sm text-orange-700 font-semibold">
+                    Only {product.stock_quantity} left
                   </p>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                  <p className="text-base text-green-700 font-bold">In Stock</p>
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  <p className="text-sm text-green-700 font-semibold">
+                    In Stock
+                  </p>
                 </>
               )}
             </div>
 
-            {/* Add to Cart Button - Extra Large, High Contrast */}
+            {/* Add to Cart Button */}
             <button
               onClick={handleAddToCart}
               disabled={isOutOfStock || isAddingToCart}
-              className={`w-full py-4 rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-3 border-2 ${
+              className={`w-full py-3 rounded-lg font-semibold text-base transition-all duration-200 flex items-center justify-center gap-2 ${
                 isOutOfStock
-                  ? "bg-gray-200 text-gray-600 border-gray-300 cursor-not-allowed"
+                  ? "bg-gray-100 text-gray-500 cursor-not-allowed"
                   : isAddingToCart
-                    ? "bg-green-700 text-white border-green-700"
-                    : "bg-green-900 text-white border-green-900 hover:bg-green-800 hover:border-green-800"
+                    ? "bg-green-700 text-white"
+                    : "bg-green-900 text-white hover:bg-green-800 shadow-sm hover:shadow"
               }`}
             >
               {isAddingToCart ? (
                 <>
-                  <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Adding...</span>
                 </>
               ) : (
                 <>
-                  <ShoppingCart className="w-6 h-6" />
+                  <ShoppingCart className="w-5 h-5" />
                   <span>{isOutOfStock ? "Out of Stock" : "Add to Cart"}</span>
                 </>
               )}
