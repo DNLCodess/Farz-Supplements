@@ -33,12 +33,20 @@ export default function Header() {
   const [miniCartOpen, setMiniCartOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
 
-  const cartItemsCount = useCartStore((state) => state.getTotalItems());
+  const getTotalItems = useCartStore((state) => state.getTotalItems);
   const wishlistCount = useWishlistCount();
   const { user, isAuthenticated, isAdmin } = useAuth();
   const { mutate: signOut, isPending: isSigningOut } = useSignOut();
+
+  // Prevent hydration mismatch - only access cart count on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const cartItemsCount = isClient ? getTotalItems() : 0;
 
   // Handle scroll for sticky header shadow
   useEffect(() => {
@@ -246,7 +254,7 @@ export default function Header() {
                   aria-label="Wishlist"
                 >
                   <Heart className="w-5 h-5" />
-                  {wishlistCount > 0 && (
+                  {isClient && wishlistCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-green-900 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {wishlistCount > 9 ? "9+" : wishlistCount}
                     </span>
@@ -318,7 +326,7 @@ export default function Header() {
                               <Heart className="w-4 h-4" />
                               Wishlist
                             </div>
-                            {wishlistCount > 0 && (
+                            {isClient && wishlistCount > 0 && (
                               <span className="bg-green-100 text-green-900 text-xs font-bold rounded-full px-2 py-0.5">
                                 {wishlistCount}
                               </span>
@@ -379,7 +387,7 @@ export default function Header() {
                   aria-label="Shopping cart"
                 >
                   <ShoppingCart className="w-5 h-5 lg:w-6 lg:h-6" />
-                  {cartItemsCount > 0 && (
+                  {isClient && cartItemsCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-green-900 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {cartItemsCount > 9 ? "9+" : cartItemsCount}
                     </span>

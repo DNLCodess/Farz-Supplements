@@ -16,14 +16,24 @@ export const useCartStore = create(
 
         try {
           const { items } = get();
+          // Use consistent ID - prefer product_id, fallback to id
+          const itemId = item.product_id || item.id;
+
+          if (!itemId) {
+            toast.error("Invalid product");
+            set({ isLoading: false });
+            return;
+          }
+
           const existingItem = items.find(
-            (i) => i.product_id === item.product_id,
+            (i) => (i.product_id || i.id) === itemId,
           );
 
           if (existingItem) {
             // Update quantity
             const newQuantity = existingItem.quantity + (item.quantity || 1);
-            const maxStock = item.product?.stock_quantity || 999;
+            const maxStock =
+              item.product?.stock_quantity || item.stock_quantity || 999;
 
             if (newQuantity > maxStock) {
               toast.error("Cannot add more items than available in stock");
@@ -33,7 +43,7 @@ export const useCartStore = create(
 
             set({
               items: items.map((i) =>
-                i.product_id === item.product_id
+                (i.product_id || i.id) === itemId
                   ? { ...i, quantity: newQuantity }
                   : i,
               ),
@@ -41,16 +51,17 @@ export const useCartStore = create(
 
             toast.success("Cart updated");
           } else {
-            // Add new item
+            // Add new item with consistent structure
+            const newItem = {
+              ...item,
+              id: itemId, // Ensure id exists
+              product_id: itemId, // Ensure product_id exists
+              quantity: item.quantity || 1,
+              added_at: new Date().toISOString(),
+            };
+
             set({
-              items: [
-                ...items,
-                {
-                  ...item,
-                  quantity: item.quantity || 1,
-                  added_at: new Date().toISOString(),
-                },
-              ],
+              items: [...items, newItem],
             });
 
             toast.success("Added to cart");
@@ -67,7 +78,9 @@ export const useCartStore = create(
       removeFromCart: (productId) => {
         const { items } = get();
         set({
-          items: items.filter((item) => item.product_id !== productId),
+          items: items.filter(
+            (item) => (item.product_id || item.id) !== productId,
+          ),
         });
         toast.success("Removed from cart");
       },
@@ -76,7 +89,7 @@ export const useCartStore = create(
       removeItem: (id) => {
         const { items } = get();
         set({
-          items: items.filter((item) => item.id !== id),
+          items: items.filter((item) => (item.id || item.product_id) !== id),
         });
         toast.success("Removed from cart");
       },
@@ -84,7 +97,7 @@ export const useCartStore = create(
       // Update item quantity
       updateQuantity: (id, quantity) => {
         const { items } = get();
-        const item = items.find((i) => i.id === id);
+        const item = items.find((i) => (i.id || i.product_id) === id);
 
         if (!item) return;
 
@@ -101,7 +114,9 @@ export const useCartStore = create(
         }
 
         set({
-          items: items.map((i) => (i.id === id ? { ...i, quantity } : i)),
+          items: items.map((i) =>
+            (i.id || i.product_id) === id ? { ...i, quantity } : i,
+          ),
         });
       },
 
@@ -116,7 +131,10 @@ export const useCartStore = create(
         const { items } = get();
         return items.reduce((total, item) => {
           const price = parseFloat(item.price || 0);
-          return total + price * item.quantity;
+          const quantity = parseInt(item.quantity || 0, 10);
+          return (
+            total + (isNaN(price) || isNaN(quantity) ? 0 : price * quantity)
+          );
         }, 0);
       },
 
@@ -125,38 +143,47 @@ export const useCartStore = create(
         const { items } = get();
         return items.reduce((total, item) => {
           const price = parseFloat(item.price || 0);
-          return total + price * item.quantity;
+          const quantity = parseInt(item.quantity || 0, 10);
+          return (
+            total + (isNaN(price) || isNaN(quantity) ? 0 : price * quantity)
+          );
         }, 0);
       },
 
       // Get cart item count
       getCartCount: () => {
         const { items } = get();
-        return items.reduce((count, item) => count + item.quantity, 0);
+        return items.reduce((count, item) => {
+          const quantity = parseInt(item.quantity || 0, 10);
+          return count + (isNaN(quantity) ? 0 : quantity);
+        }, 0);
       },
 
       // Get total items (alias for getCartCount)
       getTotalItems: () => {
         const { items } = get();
-        return items.reduce((count, item) => count + item.quantity, 0);
+        return items.reduce((count, item) => {
+          const quantity = parseInt(item.quantity || 0, 10);
+          return count + (isNaN(quantity) ? 0 : quantity);
+        }, 0);
       },
 
       // Check if item is in cart
       isInCart: (productId) => {
         const { items } = get();
-        return items.some((item) => item.product_id === productId);
+        return items.some((item) => (item.product_id || item.id) === productId);
       },
 
       // Get item quantity
       getItemQuantity: (productId) => {
         const { items } = get();
-        const item = items.find((i) => i.product_id === productId);
+        const item = items.find((i) => (i.product_id || i.id) === productId);
         return item?.quantity || 0;
       },
     }),
     {
       name: "farz-cart-storage",
-      version: 1,
+      version: 2, // Increment version to trigger migration
       storage: createJSONStorage(() => {
         // Only use localStorage on the client side
         if (typeof window !== "undefined") {
@@ -171,6 +198,22 @@ export const useCartStore = create(
       }),
       // Skip hydration during SSR
       skipHydration: typeof window === "undefined",
+      // Migrate old cart data to ensure consistent ID structure
+      migrate: (persistedState, version) => {
+        if (version < 2) {
+          // Ensure all items have both id and product_id
+          const migratedItems = (persistedState.items || []).map((item) => ({
+            ...item,
+            id: item.id || item.product_id,
+            product_id: item.product_id || item.id,
+          }));
+          return {
+            ...persistedState,
+            items: migratedItems,
+          };
+        }
+        return persistedState;
+      },
     },
   ),
 );

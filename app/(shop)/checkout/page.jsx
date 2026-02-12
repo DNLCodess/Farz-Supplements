@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCartStore } from "@/store/cart";
 import { useCheckout } from "@/hooks/use-orders";
+import { useAuth } from "@/hooks/use-auth";
+import { useAddresses } from "@/hooks/use-addresses";
 import {
   ArrowLeft,
   CreditCard,
@@ -16,26 +18,39 @@ import {
   AlertCircle,
   Loader2,
   ShieldCheck,
+  ChevronRight,
+  Bookmark,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import AddressSelector from "@/components/shared/checkout/address-selector";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getTotalPrice, clearCart } = useCartStore();
   const { initiateCheckout, isLoading } = useCheckout();
+  const { user, isAuthenticated } = useAuth();
+
+  // Fetch user addresses if authenticated
+  const {
+    addresses,
+    defaultAddress,
+    isLoading: isLoadingAddresses,
+    createAddress,
+    isCreating,
+  } = useAddresses(user?.id);
 
   const [imageErrors, setImageErrors] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
+  const [useNewAddress, setUseNewAddress] = useState(true);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [saveAddress, setSaveAddress] = useState(false);
 
   const [formData, setFormData] = useState({
-    // Customer info (always required)
     customer_email: "",
     customer_phone: "",
     customer_first_name: "",
     customer_last_name: "",
-
-    // Shipping info
     shipping_first_name: "",
     shipping_last_name: "",
     shipping_address: "",
@@ -51,8 +66,6 @@ export default function CheckoutPage() {
   const subtotal = getTotalPrice();
   const freeShippingThreshold = 50000;
   const shippingCost = subtotal >= freeShippingThreshold ? 0 : 2500;
-
-  // Calculate Paystack fee: 1.5% capped at ₦2,000
   const amountBeforeFee = subtotal + shippingCost;
   const paystackFee = Math.min(Math.round(amountBeforeFee * 0.015), 2000);
   const total = amountBeforeFee + paystackFee;
@@ -97,14 +110,33 @@ export default function CheckoutPage() {
     "FCT",
   ];
 
-  // Redirect if cart is empty
   useEffect(() => {
     if (items.length === 0) {
       router.push("/cart");
     }
   }, [items.length, router]);
 
-  // Auto-fill shipping if same as customer
+  // Pre-fill user info if authenticated
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        customer_email: user.email || "",
+        customer_first_name: user.first_name || "",
+        customer_last_name: user.last_name || "",
+        customer_phone: user.phone || "",
+      }));
+    }
+  }, [user]);
+
+  // Auto-select default address
+  useEffect(() => {
+    if (defaultAddress && !useNewAddress) {
+      setSelectedAddressId(defaultAddress.id);
+      handleSelectSavedAddress(defaultAddress);
+    }
+  }, [defaultAddress, useNewAddress]);
+
   useEffect(() => {
     if (sameAsCustomer) {
       setFormData((prev) => ({
@@ -125,6 +157,34 @@ export default function CheckoutPage() {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+  };
+
+  const handleSelectSavedAddress = (address) => {
+    setSelectedAddressId(address.id);
+    setFormData((prev) => ({
+      ...prev,
+      shipping_first_name: formData.customer_first_name,
+      shipping_last_name: formData.customer_last_name,
+      shipping_address:
+        address.address_line1 +
+        (address.address_line2 ? `, ${address.address_line2}` : ""),
+      shipping_city: address.city,
+      shipping_state: address.state,
+      shipping_postal_code: address.postal_code || "",
+    }));
+    setUseNewAddress(false);
+  };
+
+  const handleAddNewAddress = () => {
+    setUseNewAddress(true);
+    setSelectedAddressId(null);
+    setFormData((prev) => ({
+      ...prev,
+      shipping_address: "",
+      shipping_city: "",
+      shipping_state: "",
+      shipping_postal_code: "",
+    }));
   };
 
   const validateStep = (step) => {
@@ -176,8 +236,30 @@ export default function CheckoutPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (validateStep(currentStep)) {
+      // Save address if requested (authenticated users only)
+      if (
+        currentStep === 2 &&
+        saveAddress &&
+        useNewAddress &&
+        isAuthenticated
+      ) {
+        try {
+          await createAddress({
+            address_type: "shipping",
+            address_line1: formData.shipping_address,
+            city: formData.shipping_city,
+            state: formData.shipping_state,
+            postal_code: formData.shipping_postal_code || null,
+            is_default: addresses.length === 0, // Make first address default
+          });
+        } catch (error) {
+          console.error("Failed to save address:", error);
+          // Don't block checkout if address save fails
+        }
+      }
+
       setCurrentStep((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -193,7 +275,6 @@ export default function CheckoutPage() {
 
     if (!validateStep(2)) return;
 
-    // Prepare checkout data
     const checkoutData = {
       customer_email: formData.customer_email.trim(),
       customer_phone: formData.customer_phone.trim(),
@@ -221,7 +302,6 @@ export default function CheckoutPage() {
     const result = await initiateCheckout(checkoutData);
 
     if (result.success) {
-      // Store order details in localStorage for recovery
       if (typeof window !== "undefined") {
         localStorage.setItem("pending_order_id", result.order.id);
         localStorage.setItem(
@@ -230,13 +310,11 @@ export default function CheckoutPage() {
         );
       }
 
-      // Clear cart and redirect to Paystack
       clearCart();
       window.location.href = result.payment.authorization_url;
     } else {
       toast.error(result.error || "Failed to create order");
 
-      // If stock issue, scroll to top to show error
       if (result.step === "stock_check") {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -248,7 +326,7 @@ export default function CheckoutPage() {
   };
 
   if (items.length === 0) {
-    return null; // Will redirect via useEffect
+    return null;
   }
 
   const steps = [
@@ -258,24 +336,24 @@ export default function CheckoutPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 lg:py-12">
+    <div className="min-h-screen bg-gray-50 py-6 sm:py-8 lg:py-12">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Link
             href="/cart"
-            className="inline-flex items-center gap-2 text-green-900 hover:text-green-700 font-semibold text-lg mb-4 transition-colors"
+            className="inline-flex items-center gap-2 text-green-900 hover:text-green-700 font-semibold text-base sm:text-lg mb-3 sm:mb-4 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             Back to Cart
           </Link>
-          <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
             Secure Checkout
           </h1>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8 bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm">
+        {/* Progress Steps - Desktop */}
+        <div className="hidden sm:block mb-8 bg-white rounded-2xl border-2 border-gray-200 p-4 sm:p-6 shadow-sm">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => {
               const Icon = step.icon;
@@ -286,7 +364,7 @@ export default function CheckoutPage() {
                 <div key={step.number} className="flex items-center flex-1">
                   <div className="flex flex-col items-center flex-1">
                     <div
-                      className={`w-14 h-14 rounded-full flex items-center justify-center border-3 transition-all ${
+                      className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border-3 transition-all ${
                         isCompleted
                           ? "bg-green-900 border-green-900"
                           : isActive
@@ -295,15 +373,15 @@ export default function CheckoutPage() {
                       }`}
                     >
                       {isCompleted ? (
-                        <CheckCircle2 className="w-7 h-7 text-white" />
+                        <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                       ) : (
                         <Icon
-                          className={`w-7 h-7 ${isActive ? "text-green-900" : "text-gray-500"}`}
+                          className={`w-6 h-6 sm:w-7 sm:h-7 ${isActive ? "text-green-900" : "text-gray-500"}`}
                         />
                       )}
                     </div>
                     <span
-                      className={`mt-3 text-base font-bold ${
+                      className={`mt-2 sm:mt-3 text-sm sm:text-base font-bold ${
                         isActive || isCompleted
                           ? "text-green-900"
                           : "text-gray-500"
@@ -314,7 +392,7 @@ export default function CheckoutPage() {
                   </div>
                   {index < steps.length - 1 && (
                     <div
-                      className={`h-1 flex-1 mx-4 rounded transition-colors ${
+                      className={`h-1 flex-1 mx-2 sm:mx-4 rounded transition-colors ${
                         isCompleted ? "bg-green-900" : "bg-gray-200"
                       }`}
                     />
@@ -325,22 +403,43 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        {/* Progress Steps - Mobile */}
+        <div className="sm:hidden mb-6 bg-white rounded-xl border-2 border-gray-200 p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-bold text-gray-600">
+              Step {currentStep} of 3
+            </span>
+            <span className="text-sm font-bold text-green-900">
+              {steps[currentStep - 1].title}
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-green-900 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(currentStep / 3) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Form - Left Column */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmitOrder} className="space-y-6">
+            <form
+              onSubmit={handleSubmitOrder}
+              className="space-y-5 sm:space-y-6"
+            >
               {/* Step 1: Contact Information */}
               {currentStep === 1 && (
-                <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                    <User className="w-7 h-7 text-green-900" />
+                <div className="bg-white rounded-xl sm:rounded-2xl border-2 border-gray-200 p-4 sm:p-6 shadow-sm">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                    <User className="w-6 h-6 sm:w-7 sm:h-7 text-green-900" />
                     Contact Information
                   </h2>
 
-                  <div className="space-y-5">
-                    <div className="grid sm:grid-cols-2 gap-5">
+                  <div className="space-y-4 sm:space-y-5">
+                    <div className="grid sm:grid-cols-2 gap-4 sm:gap-5">
                       <div>
-                        <label className="block text-base font-bold text-gray-900 mb-2">
+                        <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
                           First Name *
                         </label>
                         <input
@@ -348,7 +447,7 @@ export default function CheckoutPage() {
                           name="customer_first_name"
                           value={formData.customer_first_name}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-4 border-2 rounded-xl text-base focus:outline-none transition-colors ${
+                          className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none transition-colors ${
                             errors.customer_first_name
                               ? "border-red-500 focus:border-red-600"
                               : "border-gray-300 focus:border-green-900"
@@ -356,15 +455,15 @@ export default function CheckoutPage() {
                           placeholder="John"
                         />
                         {errors.customer_first_name && (
-                          <p className="mt-2 text-sm text-red-600 flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
+                          <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1.5 sm:gap-2">
+                            <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             {errors.customer_first_name}
                           </p>
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-base font-bold text-gray-900 mb-2">
+                        <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
                           Last Name *
                         </label>
                         <input
@@ -372,7 +471,7 @@ export default function CheckoutPage() {
                           name="customer_last_name"
                           value={formData.customer_last_name}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-4 border-2 rounded-xl text-base focus:outline-none transition-colors ${
+                          className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none transition-colors ${
                             errors.customer_last_name
                               ? "border-red-500 focus:border-red-600"
                               : "border-gray-300 focus:border-green-900"
@@ -380,8 +479,8 @@ export default function CheckoutPage() {
                           placeholder="Doe"
                         />
                         {errors.customer_last_name && (
-                          <p className="mt-2 text-sm text-red-600 flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
+                          <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1.5 sm:gap-2">
+                            <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             {errors.customer_last_name}
                           </p>
                         )}
@@ -389,17 +488,17 @@ export default function CheckoutPage() {
                     </div>
 
                     <div>
-                      <label className="block text-base font-bold text-gray-900 mb-2">
+                      <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
                         Email Address *
                       </label>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                         <input
                           type="email"
                           name="customer_email"
                           value={formData.customer_email}
                           onChange={handleInputChange}
-                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl text-base focus:outline-none transition-colors ${
+                          className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none transition-colors ${
                             errors.customer_email
                               ? "border-red-500 focus:border-red-600"
                               : "border-gray-300 focus:border-green-900"
@@ -408,25 +507,25 @@ export default function CheckoutPage() {
                         />
                       </div>
                       {errors.customer_email && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4" />
+                        <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1.5 sm:gap-2">
+                          <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           {errors.customer_email}
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-base font-bold text-gray-900 mb-2">
+                      <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
                         Phone Number *
                       </label>
                       <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <Phone className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                         <input
                           type="tel"
                           name="customer_phone"
                           value={formData.customer_phone}
                           onChange={handleInputChange}
-                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl text-base focus:outline-none transition-colors ${
+                          className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none transition-colors ${
                             errors.customer_phone
                               ? "border-red-500 focus:border-red-600"
                               : "border-gray-300 focus:border-green-900"
@@ -435,8 +534,8 @@ export default function CheckoutPage() {
                         />
                       </div>
                       {errors.customer_phone && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4" />
+                        <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1.5 sm:gap-2">
+                          <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           {errors.customer_phone}
                         </p>
                       )}
@@ -446,260 +545,315 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={handleNextStep}
-                    className="mt-6 w-full bg-green-900 text-white px-6 py-4 rounded-xl text-lg font-bold hover:bg-green-800 transition-colors"
+                    className="mt-5 sm:mt-6 w-full bg-green-900 text-white px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl text-base sm:text-lg font-bold hover:bg-green-800 transition-colors flex items-center justify-center gap-2"
                   >
                     Continue to Shipping
+                    <ChevronRight className="w-5 h-5" />
                   </button>
                 </div>
               )}
 
               {/* Step 2: Shipping Information */}
               {currentStep === 2 && (
-                <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                    <MapPin className="w-7 h-7 text-green-900" />
+                <div className="bg-white rounded-xl sm:rounded-2xl border-2 border-gray-200 p-4 sm:p-6 shadow-sm">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                    <MapPin className="w-6 h-6 sm:w-7 sm:h-7 text-green-900" />
                     Shipping Address
                   </h2>
 
-                  <div className="space-y-5">
-                    {/* Same as contact info checkbox */}
-                    <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={sameAsCustomer}
-                        onChange={(e) => setSameAsCustomer(e.target.checked)}
-                        className="w-5 h-5 text-green-900 focus:ring-green-900 rounded"
-                      />
-                      <span className="text-base font-semibold text-gray-900">
-                        Shipping name same as contact name
-                      </span>
-                    </label>
-
-                    <div className="grid sm:grid-cols-2 gap-5">
+                  <div className="space-y-4 sm:space-y-5">
+                    {/* Saved Addresses (Authenticated Users Only) */}
+                    {isAuthenticated && addresses.length > 0 && (
                       <div>
-                        <label className="block text-base font-bold text-gray-900 mb-2">
-                          First Name *
+                        <label className="block text-sm sm:text-base font-bold text-gray-900 mb-3">
+                          Choose Address
                         </label>
-                        <input
-                          type="text"
-                          name="shipping_first_name"
-                          value={formData.shipping_first_name}
-                          onChange={handleInputChange}
-                          disabled={sameAsCustomer}
-                          className={`w-full px-4 py-4 border-2 rounded-xl text-base focus:outline-none transition-colors ${
-                            sameAsCustomer
-                              ? "bg-gray-100 cursor-not-allowed"
-                              : ""
-                          } ${
-                            errors.shipping_first_name
-                              ? "border-red-500 focus:border-red-600"
-                              : "border-gray-300 focus:border-green-900"
-                          }`}
-                          placeholder="John"
-                        />
-                        {errors.shipping_first_name && (
-                          <p className="mt-2 text-sm text-red-600 flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
-                            {errors.shipping_first_name}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-base font-bold text-gray-900 mb-2">
-                          Last Name *
-                        </label>
-                        <input
-                          type="text"
-                          name="shipping_last_name"
-                          value={formData.shipping_last_name}
-                          onChange={handleInputChange}
-                          disabled={sameAsCustomer}
-                          className={`w-full px-4 py-4 border-2 rounded-xl text-base focus:outline-none transition-colors ${
-                            sameAsCustomer
-                              ? "bg-gray-100 cursor-not-allowed"
-                              : ""
-                          } ${
-                            errors.shipping_last_name
-                              ? "border-red-500 focus:border-red-600"
-                              : "border-gray-300 focus:border-green-900"
-                          }`}
-                          placeholder="Doe"
-                        />
-                        {errors.shipping_last_name && (
-                          <p className="mt-2 text-sm text-red-600 flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
-                            {errors.shipping_last_name}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-gray-900 mb-2">
-                        Street Address *
-                      </label>
-                      <input
-                        type="text"
-                        name="shipping_address"
-                        value={formData.shipping_address}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-4 border-2 rounded-xl text-base focus:outline-none transition-colors ${
-                          errors.shipping_address
-                            ? "border-red-500 focus:border-red-600"
-                            : "border-gray-300 focus:border-green-900"
-                        }`}
-                        placeholder="123 Main Street, Apartment 4B"
-                      />
-                      {errors.shipping_address && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4" />
-                          {errors.shipping_address}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="grid sm:grid-cols-3 gap-5">
-                      <div>
-                        <label className="block text-base font-bold text-gray-900 mb-2">
-                          City *
-                        </label>
-                        <input
-                          type="text"
-                          name="shipping_city"
-                          value={formData.shipping_city}
-                          onChange={handleInputChange}
-                          className={`w-full px-4 py-4 border-2 rounded-xl text-base focus:outline-none transition-colors ${
-                            errors.shipping_city
-                              ? "border-red-500 focus:border-red-600"
-                              : "border-gray-300 focus:border-green-900"
-                          }`}
-                          placeholder="Lagos"
-                        />
-                        {errors.shipping_city && (
-                          <p className="mt-2 text-sm text-red-600 flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
-                            {errors.shipping_city}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-base font-bold text-gray-900 mb-2">
-                          State *
-                        </label>
-                        <select
-                          name="shipping_state"
-                          value={formData.shipping_state}
-                          onChange={handleInputChange}
-                          className={`w-full px-4 py-4 border-2 rounded-xl text-base focus:outline-none transition-colors ${
-                            errors.shipping_state
-                              ? "border-red-500 focus:border-red-600"
-                              : "border-gray-300 focus:border-green-900"
-                          }`}
-                        >
-                          <option value="">Select state</option>
-                          {states.map((state) => (
-                            <option key={state} value={state}>
-                              {state}
-                            </option>
-                          ))}
-                        </select>
-                        {errors.shipping_state && (
-                          <p className="mt-2 text-sm text-red-600 flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
-                            {errors.shipping_state}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-base font-bold text-gray-900 mb-2">
-                          Postal Code
-                        </label>
-                        <input
-                          type="text"
-                          name="shipping_postal_code"
-                          value={formData.shipping_postal_code}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-4 border-2 border-gray-300 rounded-xl text-base focus:outline-none focus:border-green-900 transition-colors"
-                          placeholder="100001"
+                        <AddressSelector
+                          addresses={addresses}
+                          selectedAddressId={selectedAddressId}
+                          onSelectAddress={handleSelectSavedAddress}
+                          onAddNew={handleAddNewAddress}
+                          isLoading={isLoadingAddresses}
                         />
                       </div>
-                    </div>
+                    )}
 
-                    <div>
-                      <label className="block text-base font-bold text-gray-900 mb-2">
-                        Order Notes (Optional)
-                      </label>
-                      <textarea
-                        name="order_notes"
-                        value={formData.order_notes}
-                        onChange={handleInputChange}
-                        rows="4"
-                        className="w-full px-4 py-4 border-2 border-gray-300 rounded-xl text-base focus:outline-none focus:border-green-900 transition-colors resize-none"
-                        placeholder="Any special delivery instructions?"
-                      />
-                    </div>
+                    {/* New Address Form */}
+                    {(useNewAddress ||
+                      !isAuthenticated ||
+                      addresses.length === 0) && (
+                      <>
+                        {/* Same as contact info checkbox */}
+                        <label className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={sameAsCustomer}
+                            onChange={(e) =>
+                              setSameAsCustomer(e.target.checked)
+                            }
+                            className="w-4 h-4 sm:w-5 sm:h-5 text-green-900 focus:ring-green-900 rounded"
+                          />
+                          <span className="text-sm sm:text-base font-semibold text-gray-900">
+                            Shipping name same as contact name
+                          </span>
+                        </label>
+
+                        <div className="grid sm:grid-cols-2 gap-4 sm:gap-5">
+                          <div>
+                            <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
+                              First Name *
+                            </label>
+                            <input
+                              type="text"
+                              name="shipping_first_name"
+                              value={formData.shipping_first_name}
+                              onChange={handleInputChange}
+                              disabled={sameAsCustomer}
+                              className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none transition-colors ${
+                                sameAsCustomer
+                                  ? "bg-gray-100 cursor-not-allowed"
+                                  : ""
+                              } ${
+                                errors.shipping_first_name
+                                  ? "border-red-500 focus:border-red-600"
+                                  : "border-gray-300 focus:border-green-900"
+                              }`}
+                              placeholder="John"
+                            />
+                            {errors.shipping_first_name && (
+                              <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1.5 sm:gap-2">
+                                <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                {errors.shipping_first_name}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
+                              Last Name *
+                            </label>
+                            <input
+                              type="text"
+                              name="shipping_last_name"
+                              value={formData.shipping_last_name}
+                              onChange={handleInputChange}
+                              disabled={sameAsCustomer}
+                              className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none transition-colors ${
+                                sameAsCustomer
+                                  ? "bg-gray-100 cursor-not-allowed"
+                                  : ""
+                              } ${
+                                errors.shipping_last_name
+                                  ? "border-red-500 focus:border-red-600"
+                                  : "border-gray-300 focus:border-green-900"
+                              }`}
+                              placeholder="Doe"
+                            />
+                            {errors.shipping_last_name && (
+                              <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1.5 sm:gap-2">
+                                <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                {errors.shipping_last_name}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
+                            Street Address *
+                          </label>
+                          <input
+                            type="text"
+                            name="shipping_address"
+                            value={formData.shipping_address}
+                            onChange={handleInputChange}
+                            className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none transition-colors ${
+                              errors.shipping_address
+                                ? "border-red-500 focus:border-red-600"
+                                : "border-gray-300 focus:border-green-900"
+                            }`}
+                            placeholder="123 Main Street, Apartment 4B"
+                          />
+                          {errors.shipping_address && (
+                            <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1.5 sm:gap-2">
+                              <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                              {errors.shipping_address}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
+                          <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
+                              City *
+                            </label>
+                            <input
+                              type="text"
+                              name="shipping_city"
+                              value={formData.shipping_city}
+                              onChange={handleInputChange}
+                              className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none transition-colors ${
+                                errors.shipping_city
+                                  ? "border-red-500 focus:border-red-600"
+                                  : "border-gray-300 focus:border-green-900"
+                              }`}
+                              placeholder="Lagos"
+                            />
+                            {errors.shipping_city && (
+                              <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1.5 sm:gap-2">
+                                <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                {errors.shipping_city}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
+                              State *
+                            </label>
+                            <select
+                              name="shipping_state"
+                              value={formData.shipping_state}
+                              onChange={handleInputChange}
+                              className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none transition-colors ${
+                                errors.shipping_state
+                                  ? "border-red-500 focus:border-red-600"
+                                  : "border-gray-300 focus:border-green-900"
+                              }`}
+                            >
+                              <option value="">Select state</option>
+                              {states.map((state) => (
+                                <option key={state} value={state}>
+                                  {state}
+                                </option>
+                              ))}
+                            </select>
+                            {errors.shipping_state && (
+                              <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1.5 sm:gap-2">
+                                <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                {errors.shipping_state}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
+                              Postal Code
+                            </label>
+                            <input
+                              type="text"
+                              name="shipping_postal_code"
+                              value={formData.shipping_postal_code}
+                              onChange={handleInputChange}
+                              className="w-full px-3 sm:px-4 py-3 sm:py-4 border-2 border-gray-300 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none focus:border-green-900 transition-colors"
+                              placeholder="100001"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Save Address Option (Authenticated Users Only) */}
+                        {isAuthenticated && useNewAddress && (
+                          <label className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 bg-blue-50 border-2 border-blue-200 rounded-lg sm:rounded-xl cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={saveAddress}
+                              onChange={(e) => setSaveAddress(e.target.checked)}
+                              className="w-4 h-4 sm:w-5 sm:h-5 text-green-900 focus:ring-green-900 rounded"
+                            />
+                            <div className="flex items-center gap-2">
+                              <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 text-green-700" />
+                              <span className="text-sm sm:text-base font-semibold text-gray-900">
+                                Save this address for future orders
+                              </span>
+                            </div>
+                          </label>
+                        )}
+
+                        <div>
+                          <label className="block text-sm sm:text-base font-bold text-gray-900 mb-2">
+                            Order Notes (Optional)
+                          </label>
+                          <textarea
+                            name="order_notes"
+                            value={formData.order_notes}
+                            onChange={handleInputChange}
+                            rows="3"
+                            className="w-full px-3 sm:px-4 py-3 sm:py-4 border-2 border-gray-300 rounded-lg sm:rounded-xl text-sm sm:text-base focus:outline-none focus:border-green-900 transition-colors resize-none"
+                            placeholder="Any special delivery instructions?"
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className="mt-6 flex gap-4">
+                  <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <button
                       type="button"
                       onClick={handlePreviousStep}
-                      className="flex-1 bg-white border-2 border-gray-300 text-gray-900 px-6 py-4 rounded-xl text-lg font-bold hover:border-green-900 hover:bg-gray-50 transition-colors"
+                      className="w-full sm:flex-1 bg-white border-2 border-gray-300 text-gray-900 px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl text-base sm:text-lg font-bold hover:border-green-900 hover:bg-gray-50 transition-colors"
                     >
                       Back
                     </button>
                     <button
                       type="button"
                       onClick={handleNextStep}
-                      className="flex-1 bg-green-900 text-white px-6 py-4 rounded-xl text-lg font-bold hover:bg-green-800 transition-colors"
+                      disabled={isCreating}
+                      className="w-full sm:flex-1 bg-green-900 text-white px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl text-base sm:text-lg font-bold hover:bg-green-800 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400"
                     >
-                      Review Order
+                      {isCreating ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          Review Order
+                          <ChevronRight className="w-5 h-5" />
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Step 3: Review & Submit */}
+              {/* Step 3: Review & Submit - Same as before */}
               {currentStep === 3 && (
-                <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                    <CheckCircle2 className="w-7 h-7 text-green-900" />
+                <div className="bg-white rounded-xl sm:rounded-2xl border-2 border-gray-200 p-4 sm:p-6 shadow-sm">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                    <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7 text-green-900" />
                     Review Your Order
                   </h2>
 
                   {/* Contact Info */}
-                  <div className="mb-6 p-5 bg-gray-50 rounded-xl">
-                    <h3 className="font-bold text-gray-900 mb-3">
+                  <div className="mb-4 sm:mb-6 p-4 sm:p-5 bg-gray-50 rounded-lg sm:rounded-xl">
+                    <h3 className="font-bold text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">
                       Contact Information
                     </h3>
-                    <p className="text-base text-gray-700">
+                    <p className="text-sm sm:text-base text-gray-700">
                       {formData.customer_first_name}{" "}
                       {formData.customer_last_name}
                     </p>
-                    <p className="text-base text-gray-700">
+                    <p className="text-sm sm:text-base text-gray-700">
                       {formData.customer_email}
                     </p>
-                    <p className="text-base text-gray-700">
+                    <p className="text-sm sm:text-base text-gray-700">
                       {formData.customer_phone}
                     </p>
                   </div>
 
                   {/* Shipping Address */}
-                  <div className="mb-6 p-5 bg-gray-50 rounded-xl">
-                    <h3 className="font-bold text-gray-900 mb-3">
+                  <div className="mb-4 sm:mb-6 p-4 sm:p-5 bg-gray-50 rounded-lg sm:rounded-xl">
+                    <h3 className="font-bold text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">
                       Shipping Address
                     </h3>
-                    <p className="text-base text-gray-700">
+                    <p className="text-sm sm:text-base text-gray-700">
                       {formData.shipping_first_name}{" "}
                       {formData.shipping_last_name}
                     </p>
-                    <p className="text-base text-gray-700">
+                    <p className="text-sm sm:text-base text-gray-700">
                       {formData.shipping_address}
                     </p>
-                    <p className="text-base text-gray-700">
+                    <p className="text-sm sm:text-base text-gray-700">
                       {formData.shipping_city}, {formData.shipping_state}
                       {formData.shipping_postal_code &&
                         ` ${formData.shipping_postal_code}`}
@@ -707,14 +861,14 @@ export default function CheckoutPage() {
                   </div>
 
                   {/* Security Notice */}
-                  <div className="p-5 bg-green-50 rounded-xl border-2 border-green-200 mb-6">
-                    <div className="flex items-start gap-3">
-                      <ShieldCheck className="w-6 h-6 text-green-700 flex-shrink-0 mt-1" />
+                  <div className="p-4 sm:p-5 bg-green-50 rounded-lg sm:rounded-xl border-2 border-green-200 mb-5 sm:mb-6">
+                    <div className="flex items-start gap-2 sm:gap-3">
+                      <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-green-700 flex-shrink-0 mt-0.5 sm:mt-1" />
                       <div>
-                        <p className="font-bold text-green-900 mb-1">
+                        <p className="font-bold text-green-900 mb-1 text-sm sm:text-base">
                           Secure Payment
                         </p>
-                        <p className="text-sm text-green-800">
+                        <p className="text-xs sm:text-sm text-green-800">
                           You'll be redirected to Paystack to complete your
                           payment securely. Your payment information is
                           encrypted and never stored on our servers.
@@ -723,27 +877,27 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <button
                       type="button"
                       onClick={handlePreviousStep}
-                      className="flex-1 bg-white border-2 border-gray-300 text-gray-900 px-6 py-4 rounded-xl text-lg font-bold hover:border-green-900 hover:bg-gray-50 transition-colors"
+                      className="w-full sm:flex-1 bg-white border-2 border-gray-300 text-gray-900 px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl text-base sm:text-lg font-bold hover:border-green-900 hover:bg-gray-50 transition-colors"
                     >
                       Back
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-1 bg-green-900 text-white px-6 py-4 rounded-xl text-lg font-bold hover:bg-green-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                      className="w-full sm:flex-1 bg-green-900 text-white px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl text-base sm:text-lg font-bold hover:bg-green-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3"
                     >
                       {isLoading ? (
                         <>
-                          <Loader2 className="w-6 h-6 animate-spin" />
+                          <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
                           <span>Processing...</span>
                         </>
                       ) : (
                         <>
-                          <CreditCard className="w-6 h-6" />
+                          <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
                           <span>Proceed to Payment</span>
                         </>
                       )}
@@ -754,60 +908,66 @@ export default function CheckoutPage() {
             </form>
           </div>
 
-          {/* Order Summary - Right Column */}
+          {/* Order Summary - Same as before but truncated for brevity */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm sticky top-24">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl border-2 border-gray-200 p-4 sm:p-6 shadow-sm lg:sticky lg:top-24">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Order Summary
               </h2>
 
               {/* Products */}
-              <div className="space-y-4 mb-6 pb-6 border-b-2 border-gray-200">
-                {items.map((item) => (
-                  <div key={item.id} className="flex gap-4">
-                    <div className="relative w-20 h-20 flex-shrink-0 bg-gray-50 rounded-xl overflow-hidden">
-                      {!imageErrors[item.id] ? (
-                        <Image
-                          src={
-                            item.images?.[0] ||
-                            "/images/product-placeholder.png"
-                          }
-                          alt={item.name}
-                          fill
-                          className="object-cover"
-                          sizes="80px"
-                          onError={() => handleImageError(item.id)}
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-3xl">
-                          🌿
+              <div className="space-y-3 sm:space-y-4 mb-5 sm:mb-6 pb-5 sm:pb-6 border-b-2 border-gray-200 max-h-[300px] sm:max-h-[400px] overflow-y-auto">
+                {items.map((item) => {
+                  const product = item.product || item;
+                  const itemName = item.name || product.name || "Product";
+                  const itemImages = item.images || product.images || [];
+                  const itemPrice = item.price || product.price || 0;
+
+                  return (
+                    <div key={item.id} className="flex gap-3 sm:gap-4">
+                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-gray-50 rounded-lg sm:rounded-xl overflow-hidden">
+                        {!imageErrors[item.id] ? (
+                          <Image
+                            src={
+                              itemImages[0] || "/images/product-placeholder.png"
+                            }
+                            alt={itemName}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 64px, 80px"
+                            onError={() => handleImageError(item.id)}
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl">
+                            🌿
+                          </div>
+                        )}
+                        <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-6 h-6 sm:w-7 sm:h-7 bg-green-900 text-white rounded-full flex items-center justify-center text-xs sm:text-sm font-bold shadow-lg">
+                          {item.quantity}
                         </div>
-                      )}
-                      <div className="absolute -top-2 -right-2 w-7 h-7 bg-green-900 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
-                        {item.quantity}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-sm sm:text-base line-clamp-2 mb-1">
+                          {itemName}
+                        </h3>
+                        <p className="text-base sm:text-lg font-bold text-green-900">
+                          ₦{(itemPrice * item.quantity).toLocaleString()}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 text-base line-clamp-2 mb-1">
-                        {item.name}
-                      </h3>
-                      <p className="text-lg font-bold text-green-900">
-                        ₦{(item.price * item.quantity).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Price Breakdown */}
-              <div className="space-y-4 mb-6 pb-6 border-b-2 border-gray-200">
-                <div className="flex justify-between text-lg">
+              <div className="space-y-3 sm:space-y-4 mb-5 sm:mb-6 pb-5 sm:pb-6 border-b-2 border-gray-200">
+                <div className="flex justify-between text-base sm:text-lg">
                   <span className="text-gray-700">Subtotal</span>
                   <span className="font-bold text-gray-900">
                     ₦{subtotal.toLocaleString()}
                   </span>
                 </div>
-                <div className="flex justify-between text-lg">
+                <div className="flex justify-between text-base sm:text-lg">
                   <span className="text-gray-700">Shipping</span>
                   <span className="font-bold text-gray-900">
                     {shippingCost === 0 ? (
@@ -817,14 +977,14 @@ export default function CheckoutPage() {
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between text-lg">
+                <div className="flex justify-between text-base sm:text-lg">
                   <span className="text-gray-700">Transaction Fee</span>
                   <span className="font-bold text-gray-900">
                     ₦{paystackFee.toLocaleString()}
                   </span>
                 </div>
                 {subtotal < freeShippingThreshold && (
-                  <p className="text-sm text-green-700 bg-green-50 p-3 rounded-lg">
+                  <p className="text-xs sm:text-sm text-green-700 bg-green-50 p-2.5 sm:p-3 rounded-lg">
                     Add ₦{(freeShippingThreshold - subtotal).toLocaleString()}{" "}
                     more for free shipping!
                   </p>
@@ -833,8 +993,10 @@ export default function CheckoutPage() {
 
               {/* Total */}
               <div className="flex justify-between items-center">
-                <span className="text-xl font-bold text-gray-900">Total</span>
-                <span className="text-3xl font-bold text-green-900">
+                <span className="text-lg sm:text-xl font-bold text-gray-900">
+                  Total
+                </span>
+                <span className="text-2xl sm:text-3xl font-bold text-green-900">
                   ₦{total.toLocaleString()}
                 </span>
               </div>

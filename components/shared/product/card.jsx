@@ -11,6 +11,8 @@ import {
   AlertCircle,
   XCircle,
   Loader2,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { usePrefetchProduct } from "@/hooks/use-products";
@@ -21,18 +23,30 @@ import {
   useIsInWishlist,
 } from "@/hooks/use-wishlist";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import CartToast from "../cart/cart-toast";
 import WishlistToast from "../wishlist/toast";
 
 export default function ProductCard({ product }) {
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [showWishlistToast, setShowWishlistToast] = useState(false);
   const [wishlistAction, setWishlistAction] = useState(null);
 
+  // Get cart methods and state with proper selectors for reactivity
   const addToCart = useCartStore((state) => state.addToCart);
+  const updateQuantity = useCartStore((state) => state.updateQuantity);
+  const removeItem = useCartStore((state) => state.removeItem);
+
+  // Use selector to get cart quantity - this will trigger re-render when it changes
+  const cartQuantity = useCartStore((state) =>
+    state.getItemQuantity(product.id),
+  );
+
+  const isInCart = cartQuantity > 0;
+
   const prefetchProduct = usePrefetchProduct();
   const { user } = useAuth();
 
@@ -72,22 +86,51 @@ export default function ProductCard({ product }) {
 
     if (isOutOfStock) return;
 
-    setIsAddingToCart(true);
+    setIsUpdating(true);
 
-    // Add to cart with proper structure
-    await addToCart({
-      product_id: product.id,
-      product: product,
-      price: product.price,
-      quantity: 1,
-      stock_quantity: product.stock_quantity,
-    });
+    try {
+      await addToCart({
+        product_id: product.id,
+        product: product,
+        price: product.price,
+        quantity: 1,
+        stock_quantity: product.stock_quantity,
+      });
 
-    // Show feedback
-    setTimeout(() => {
-      setIsAddingToCart(false);
-      setShowToast(true);
-    }, 400);
+      // Show feedback
+      setTimeout(() => {
+        setIsUpdating(false);
+        setShowToast(true);
+      }, 400);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Failed to add to cart");
+      setIsUpdating(false);
+    }
+  };
+
+  const handleIncrement = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (cartQuantity < product.stock_quantity) {
+      updateQuantity(product.id, cartQuantity + 1);
+    } else {
+      toast.error("Cannot add more items than available in stock");
+    }
+  };
+
+  const handleDecrement = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (cartQuantity > 1) {
+      updateQuantity(product.id, cartQuantity - 1);
+    } else {
+      // Remove from cart when quantity reaches 0
+      removeItem(product.id);
+      toast.success("Removed from cart");
+    }
   };
 
   const handleWishlistClick = (e) => {
@@ -187,6 +230,13 @@ export default function ProductCard({ product }) {
               />
             )}
           </button>
+
+          {/* In Cart Badge */}
+          {isInCart && !isOutOfStock && (
+            <div className="absolute bottom-3 left-3 bg-green-900 text-white px-2.5 py-1 rounded-lg text-xs font-bold shadow-md">
+              In Cart: {cartQuantity}
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
@@ -263,30 +313,62 @@ export default function ProductCard({ product }) {
               )}
             </div>
 
-            {/* Add to Cart Button */}
-            <button
-              onClick={handleAddToCart}
-              disabled={isOutOfStock || isAddingToCart}
-              className={`w-full py-3 rounded-lg font-semibold text-base transition-all duration-200 flex items-center justify-center gap-2 ${
-                isOutOfStock
-                  ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                  : isAddingToCart
-                    ? "bg-green-700 text-white"
-                    : "bg-green-900 text-white hover:bg-green-800 shadow-sm hover:shadow"
-              }`}
-            >
-              {isAddingToCart ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Adding...</span>
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="w-5 h-5" />
-                  <span>{isOutOfStock ? "Out of Stock" : "Add to Cart"}</span>
-                </>
-              )}
-            </button>
+            {/* Add to Cart Button or Quantity Controls */}
+            {!isInCart ? (
+              <button
+                onClick={handleAddToCart}
+                disabled={isOutOfStock || isUpdating}
+                className={`w-full py-3 rounded-lg font-semibold text-base transition-all duration-200 flex items-center justify-center gap-2 ${
+                  isOutOfStock
+                    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    : isUpdating
+                      ? "bg-green-700 text-white"
+                      : "bg-green-900 text-white hover:bg-green-800 shadow-sm hover:shadow"
+                }`}
+              >
+                {isUpdating ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Adding...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-5 h-5" />
+                    <span>{isOutOfStock ? "Out of Stock" : "Add to Cart"}</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="flex items-center bg-green-50 border-2 border-green-900 rounded-lg overflow-hidden">
+                <button
+                  onClick={handleDecrement}
+                  className="flex-1 py-3 px-3 bg-white hover:bg-gray-100 transition-colors flex items-center justify-center border-r border-green-900"
+                  aria-label="Decrease quantity"
+                >
+                  <Minus className="w-5 h-5 text-green-900" />
+                </button>
+                <div className="flex-1 py-3 px-3 flex items-center justify-center">
+                  <span className="text-base font-bold text-green-900">
+                    {cartQuantity}
+                  </span>
+                </div>
+                <button
+                  onClick={handleIncrement}
+                  disabled={cartQuantity >= product.stock_quantity}
+                  className="flex-1 py-3 px-3 bg-white hover:bg-gray-100 transition-colors flex items-center justify-center border-l border-green-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Increase quantity"
+                >
+                  <Plus className="w-5 h-5 text-green-900" />
+                </button>
+              </div>
+            )}
+
+            {/* Stock Warning - Only show when in cart */}
+            {isInCart && cartQuantity >= product.stock_quantity && (
+              <p className="text-xs text-orange-600 mt-2 font-medium text-center">
+                Maximum quantity reached
+              </p>
+            )}
           </div>
         </div>
       </Link>
