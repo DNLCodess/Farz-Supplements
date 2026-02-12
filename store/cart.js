@@ -1,10 +1,10 @@
 "use client";
 
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { toast } from "sonner";
 
-export const useCart = create(
+export const useCartStore = create(
   persist(
     (set, get) => ({
       items: [],
@@ -72,14 +72,23 @@ export const useCart = create(
         toast.success("Removed from cart");
       },
 
-      // Update item quantity
-      updateQuantity: (productId, quantity) => {
+      // Remove item by ID (alias for compatibility)
+      removeItem: (id) => {
         const { items } = get();
-        const item = items.find((i) => i.product_id === productId);
+        set({
+          items: items.filter((item) => item.id !== id),
+        });
+        toast.success("Removed from cart");
+      },
+
+      // Update item quantity
+      updateQuantity: (id, quantity) => {
+        const { items } = get();
+        const item = items.find((i) => i.id === id);
 
         if (!item) return;
 
-        const maxStock = item.product?.stock_quantity || 999;
+        const maxStock = item.stock_quantity || 999;
 
         if (quantity > maxStock) {
           toast.error("Cannot add more items than available in stock");
@@ -87,14 +96,12 @@ export const useCart = create(
         }
 
         if (quantity <= 0) {
-          get().removeFromCart(productId);
+          get().removeItem(id);
           return;
         }
 
         set({
-          items: items.map((i) =>
-            i.product_id === productId ? { ...i, quantity } : i,
-          ),
+          items: items.map((i) => (i.id === id ? { ...i, quantity } : i)),
         });
       },
 
@@ -108,7 +115,16 @@ export const useCart = create(
       getCartTotal: () => {
         const { items } = get();
         return items.reduce((total, item) => {
-          const price = parseFloat(item.product?.price || 0);
+          const price = parseFloat(item.price || 0);
+          return total + price * item.quantity;
+        }, 0);
+      },
+
+      // Get total price (alias for compatibility)
+      getTotalPrice: () => {
+        const { items } = get();
+        return items.reduce((total, item) => {
+          const price = parseFloat(item.price || 0);
           return total + price * item.quantity;
         }, 0);
       },
@@ -119,7 +135,7 @@ export const useCart = create(
         return items.reduce((count, item) => count + item.quantity, 0);
       },
 
-      // Get total items (alias for getCartCount - used by Header)
+      // Get total items (alias for getCartCount)
       getTotalItems: () => {
         const { items } = get();
         return items.reduce((count, item) => count + item.quantity, 0);
@@ -141,13 +157,23 @@ export const useCart = create(
     {
       name: "farz-cart-storage",
       version: 1,
-      // ✅ THIS IS THE IMPORTANT FIX
-      storage: createJSONStorage(() =>
-        typeof window !== "undefined" ? localStorage : undefined,
-      ),
+      storage: createJSONStorage(() => {
+        // Only use localStorage on the client side
+        if (typeof window !== "undefined") {
+          return localStorage;
+        }
+        // Return a no-op storage for SSR
+        return {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+        };
+      }),
+      // Skip hydration during SSR
+      skipHydration: typeof window === "undefined",
     },
   ),
 );
 
 // Export the hook that components can use
-export const useCartStore = useCart;
+export const useCart = useCartStore;

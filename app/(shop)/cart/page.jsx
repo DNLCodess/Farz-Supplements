@@ -1,7 +1,6 @@
 "use client";
-export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCartStore } from "@/store/cart";
@@ -22,13 +21,19 @@ export default function CartPage() {
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
+  const [isClient, setIsClient] = useState(false);
 
   const { items, updateQuantity, removeItem, getTotalPrice, getTotalItems } =
     useCartStore();
 
+  // Prevent hydration mismatch by only rendering cart contents on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const subtotal = getTotalPrice();
-  const shipping = subtotal > 50000 ? 0 : 2500; // Free shipping over ₦50,000
-  const discount = promoApplied ? subtotal * 0.1 : 0; // 10% off if promo applied
+  const shipping = subtotal > 50000 ? 0 : 2500;
+  const discount = promoApplied ? subtotal * 0.1 : 0;
   const total = subtotal + shipping - discount;
 
   const handleApplyPromo = () => {
@@ -40,6 +45,21 @@ export default function CartPage() {
   const handleImageError = (productId) => {
     setImageErrors((prev) => ({ ...prev, [productId]: true }));
   };
+
+  // Show loading state during SSR/hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="w-32 h-32 mx-auto mb-8 bg-gray-100 rounded-full flex items-center justify-center animate-pulse">
+              <ShoppingCart className="w-16 h-16 text-gray-400" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -89,7 +109,7 @@ export default function CartPage() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:border-green-500 transition-all duration-200"
+                className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:border-green-500 transition-colors duration-200"
               >
                 <div className="flex gap-6">
                   {/* Product Image */}
@@ -208,7 +228,7 @@ export default function CartPage() {
 
           {/* Order Summary - Right Column */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-6 sticky top-24">
+            <div className="bg-white rounded-xl border-2 border-gray-200 p-6 lg:sticky lg:top-24">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 Order Summary
               </h2>
