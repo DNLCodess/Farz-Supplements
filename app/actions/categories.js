@@ -3,17 +3,45 @@
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
+/**
+ * Get categories - returns flat array suitable for dropdowns
+ * For hierarchical display, use getCategoriesHierarchical()
+ */
 export async function getCategories({ includeInactive = false } = {}) {
   try {
     let query = supabaseAdmin
       .from("categories")
-      .select(
-        `
-        *,
-        parent:parent_id(id, name, slug),
-        products:products(count)
-      `,
-      )
+      .select("*")
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (!includeInactive) {
+      query = query.eq("is_active", true);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    // Return flat array for dropdowns
+    return data || [];
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get categories with hierarchical structure
+ * Use this for admin category management pages
+ */
+export async function getCategoriesHierarchical({
+  includeInactive = false,
+} = {}) {
+  try {
+    let query = supabaseAdmin
+      .from("categories")
+      .select("*")
       .order("display_order", { ascending: true })
       .order("name", { ascending: true });
 
@@ -55,17 +83,31 @@ export async function getCategoryById(id) {
   try {
     const { data, error } = await supabaseAdmin
       .from("categories")
-      .select(
-        `
-        *,
-        parent:parent_id(id, name, slug),
-        products:products(count)
-      `,
-      )
+      .select("*")
       .eq("id", id)
       .single();
 
     if (error) throw error;
+
+    // Get parent info if exists
+    if (data.parent_id) {
+      const { data: parent } = await supabaseAdmin
+        .from("categories")
+        .select("id, name, slug")
+        .eq("id", data.parent_id)
+        .single();
+
+      data.parent = parent;
+    }
+
+    // Get product count
+    const { count } = await supabaseAdmin
+      .from("products")
+      .select("*", { count: "exact", head: true })
+      .eq("category_id", id);
+
+    data.product_count = count || 0;
+
     return data;
   } catch (error) {
     console.error("Error fetching category:", error);

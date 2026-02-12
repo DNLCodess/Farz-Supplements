@@ -82,28 +82,46 @@ export async function getProductById(id) {
 
 export async function createProduct(formData) {
   try {
+    // Build product data with only columns that exist in schema
     const productData = {
+      // Basic info (all exist in schema)
       name: formData.name,
       slug:
         formData.slug ||
         formData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      description: formData.description,
-      short_description: formData.short_description,
+      description: formData.description || null,
+      short_description: formData.short_description || null,
+
+      // Pricing (all exist in schema)
       price: parseFloat(formData.price),
       compare_at_price: formData.compare_at_price
         ? parseFloat(formData.compare_at_price)
         : null,
       cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
+
+      // Inventory (all exist in schema)
       sku: formData.sku || generateSKU(),
       barcode: formData.barcode || null,
-      category_id: formData.category_id || null,
       stock_quantity: parseInt(formData.stock_quantity) || 0,
       low_stock_threshold: parseInt(formData.low_stock_threshold) || 10,
+
+      // Physical properties (all exist in schema)
       weight: formData.weight ? parseFloat(formData.weight) : null,
       dimensions: formData.dimensions || null,
-      images: formData.images || [],
+
+      // Images - handle both image_url (single) and images (array)
+      image_url: formData.image_url || null,
+      images:
+        formData.images || (formData.image_url ? [formData.image_url] : []),
+
+      // Category (exists in schema)
+      category_id: formData.category_id || null,
+
+      // Status flags (all exist in schema)
       is_active: formData.is_active !== false,
       is_featured: formData.is_featured || false,
+
+      // SEO (all exist in schema)
       meta_title: formData.meta_title || formData.name,
       meta_description:
         formData.meta_description || formData.short_description || "",
@@ -137,28 +155,48 @@ export async function createProduct(formData) {
 
 export async function updateProduct(id, formData) {
   try {
+    // Build product data with only columns that exist in schema
     const productData = {
+      // Basic info
       name: formData.name,
       slug: formData.slug,
-      description: formData.description,
-      short_description: formData.short_description,
+      description: formData.description || null,
+      short_description: formData.short_description || null,
+
+      // Pricing
       price: parseFloat(formData.price),
       compare_at_price: formData.compare_at_price
         ? parseFloat(formData.compare_at_price)
         : null,
       cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
+
+      // Inventory
       sku: formData.sku,
       barcode: formData.barcode || null,
-      category_id: formData.category_id || null,
       stock_quantity: parseInt(formData.stock_quantity),
       low_stock_threshold: parseInt(formData.low_stock_threshold),
+
+      // Physical properties
       weight: formData.weight ? parseFloat(formData.weight) : null,
       dimensions: formData.dimensions || null,
-      images: formData.images || [],
+
+      // Images - handle both image_url (single) and images (array)
+      image_url: formData.image_url || null,
+      images:
+        formData.images || (formData.image_url ? [formData.image_url] : []),
+
+      // Category
+      category_id: formData.category_id || null,
+
+      // Status flags
       is_active: formData.is_active,
       is_featured: formData.is_featured,
+
+      // SEO
       meta_title: formData.meta_title || formData.name,
       meta_description: formData.meta_description || "",
+
+      // Timestamp (exists in schema)
       updated_at: new Date().toISOString(),
     };
 

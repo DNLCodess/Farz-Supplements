@@ -36,7 +36,7 @@ export default function NewProductPage() {
     compare_at_price: "",
     cost_price: "",
     sku: "",
-    barcode: "",
+
     category_id: "",
     stock_quantity: "0",
     low_stock_threshold: "10",
@@ -55,6 +55,8 @@ export default function NewProductPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+  const [imageFile, setImageFile] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Fetch categories
   const { data: categoriesData } = useQuery({
@@ -62,12 +64,50 @@ export default function NewProductPage() {
     queryFn: getCategories,
   });
 
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedFormData = localStorage.getItem("new-product-draft");
+    if (savedFormData) {
+      try {
+        const parsed = JSON.parse(savedFormData);
+        setFormData(parsed);
+        setHasUnsavedChanges(true);
+
+        // Load image preview if exists
+        if (parsed.imagePreview) {
+          setImagePreview(parsed.imagePreview);
+        }
+
+        toast.info("Draft restored from previous session");
+      } catch (error) {
+        console.error("Failed to restore draft:", error);
+        localStorage.removeItem("new-product-draft");
+      }
+    }
+  }, []);
+
+  // Save to localStorage on changes (debounced)
+  useEffect(() => {
+    if (hasUnsavedChanges) {
+      const timeoutId = setTimeout(() => {
+        const dataToSave = {
+          ...formData,
+          imagePreview: imagePreview,
+        };
+        localStorage.setItem("new-product-draft", JSON.stringify(dataToSave));
+      }, 1000); // Save after 1 second of inactivity
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [formData, imagePreview, hasUnsavedChanges]);
+
   // Create product mutation
   const createMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: (result) => {
       if (result.success) {
         setHasUnsavedChanges(false);
+        localStorage.removeItem("new-product-draft"); // Clear saved draft
         toast.success("Product created successfully!", {
           icon: <Check className="w-4 h-4" />,
         });
@@ -174,19 +214,25 @@ export default function NewProductPage() {
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result);
+      setImageFile(file); // Store actual file for upload
       setFormData((prev) => ({
         ...prev,
-        images: [reader.result],
+        imagePreview: reader.result, // For localStorage persistence
       }));
       setHasUnsavedChanges(true);
-      toast.success("Image uploaded successfully");
+      toast.success("Image ready for upload");
     };
     reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
     setImagePreview(null);
-    setFormData((prev) => ({ ...prev, images: [] }));
+    setImageFile(null);
+    setFormData((prev) => ({
+      ...prev,
+      images: [],
+      imagePreview: null,
+    }));
     setHasUnsavedChanges(true);
   };
 
@@ -208,9 +254,9 @@ export default function NewProductPage() {
       errors.compare_at_price = "Compare price must be higher than price";
     }
 
-    // if (!formData.slug.trim()) {
-    //   errors.slug = "URL slug is required";
-    // }
+    if (!formData.slug.trim()) {
+      errors.slug = "URL slug is required";
+    }
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -224,7 +270,48 @@ export default function NewProductPage() {
       return;
     }
 
-    createMutation.mutate(formData);
+    try {
+      let imageUrl = null;
+
+      // Upload image to Supabase storage if exists
+      if (imageFile) {
+        setUploadingImage(true);
+        const fileExt = imageFile.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", imageFile);
+        formDataToSend.append("fileName", fileName);
+
+        const uploadResponse = await fetch("/api/upload-product-image", {
+          method: "POST",
+          body: formDataToSend,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error("Failed to upload image");
+        }
+
+        const uploadData = await uploadResponse.json();
+        imageUrl = uploadData.url;
+        setUploadingImage(false);
+      }
+
+      // Prepare product data without base64 image
+      const productData = {
+        ...formData,
+        image_url: imageUrl,
+        images: imageUrl ? [imageUrl] : [],
+      };
+
+      // Remove imagePreview field (used only for localStorage)
+      delete productData.imagePreview;
+
+      createMutation.mutate(productData);
+    } catch (error) {
+      setUploadingImage(false);
+      toast.error(error.message || "Failed to process image");
+    }
   };
 
   const calculateMargin = () => {
@@ -258,8 +345,83 @@ export default function NewProductPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-5">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5">
+          {/* Mobile Layout - Stacked (< lg) */}
+          <div className="flex flex-col gap-4 lg:hidden">
+            {/* Top row - Back button and title */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => router.push("/admin/products")}
+                className="flex-shrink-0 p-2.5 hover:bg-gray-100 rounded-xl transition-all duration-150 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                title="Back to products"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-700" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl sm:text-2xl font-bold text-charcoal">
+                    Add New Product
+                  </h1>
+                  {hasUnsavedChanges && (
+                    <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded-lg whitespace-nowrap">
+                      Unsaved
+                    </span>
+                  )}
+                  {createMutation.isPending && (
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-lg flex items-center gap-1.5 whitespace-nowrap">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Saving
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 mt-0.5 hidden sm:block">
+                  Fill in the details below
+                </p>
+              </div>
+            </div>
+
+            {/* Bottom row - Action buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => router.push("/admin/products")}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:border-gray-400 hover:bg-gray-50 transition-all duration-150 min-h-[44px] active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={
+                  createMutation.isPending ||
+                  uploadingImage ||
+                  !hasUnsavedChanges
+                }
+                className="flex-[1.5] flex items-center justify-center gap-2 px-4 py-3 bg-green-900 text-white rounded-xl text-sm font-semibold hover:bg-green-800 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow min-h-[44px] active:scale-95"
+              >
+                {uploadingImage ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Uploading...</span>
+                  </>
+                ) : createMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Create Product</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Layout - Horizontal (>= lg) */}
+          <div className="hidden lg:flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 type="button"
@@ -302,10 +464,19 @@ export default function NewProductPage() {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={createMutation.isPending || !hasUnsavedChanges}
+                disabled={
+                  createMutation.isPending ||
+                  uploadingImage ||
+                  !hasUnsavedChanges
+                }
                 className="flex items-center gap-2 px-8 py-3.5 bg-green-900 text-white rounded-xl text-base font-semibold hover:bg-green-800 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow min-h-[48px]"
               >
-                {createMutation.isPending ? (
+                {uploadingImage ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Uploading Image...
+                  </>
+                ) : createMutation.isPending ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Creating...
@@ -323,26 +494,30 @@ export default function NewProductPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6"
+        >
           {/* Left Column - Main Details */}
-          <div className="col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Basic Information */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 transition-all duration-200 hover:shadow-sm">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 transition-all duration-200 hover:shadow-sm">
+              <div className="flex items-center gap-2 mb-4 sm:mb-5">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-green-100 rounded-lg flex items-center justify-center">
                   <Package className="w-4 h-4 text-green-900" />
                 </div>
-                <h2 className="text-lg font-semibold text-charcoal">
+                <h2 className="text-base sm:text-lg font-semibold text-charcoal">
                   Basic Information
                 </h2>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4 sm:space-y-5">
                 {/* Product Name */}
                 <div>
-                  <label className="block text-base font-semibold text-gray-900 mb-2.5">
-                    Product Name <span className="text-red-500 text-lg">*</span>
+                  <label className="block text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-2.5">
+                    Product Name{" "}
+                    <span className="text-red-500 text-base sm:text-lg">*</span>
                   </label>
                   <input
                     type="text"
@@ -352,7 +527,7 @@ export default function NewProductPage() {
                     onFocus={() => setFocusedField("name")}
                     onBlur={() => setFocusedField(null)}
                     placeholder="e.g., Organic Turmeric Capsules"
-                    className={`w-full px-5 py-4 border-2 rounded-xl text-lg transition-all duration-150 ${
+                    className={`w-full px-4 sm:px-5 py-3 sm:py-4 border-2 rounded-xl text-base sm:text-lg transition-all duration-150 ${
                       focusedField === "name"
                         ? "border-green-900 ring-4 ring-green-900/10"
                         : validationErrors.name
@@ -363,8 +538,8 @@ export default function NewProductPage() {
                     autoFocus
                   />
                   {validationErrors.name && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1.5 font-medium">
-                      <AlertCircle className="w-4 h-4" />
+                    <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1.5 font-medium">
+                      <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                       {validationErrors.name}
                     </p>
                   )}
@@ -470,7 +645,7 @@ export default function NewProductPage() {
                 <h2 className="text-lg font-semibold text-charcoal">Pricing</h2>
               </div>
 
-              <div className="grid grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
                 <div>
                   <label className="block text-base font-semibold text-gray-900 mb-2.5">
                     Price <span className="text-red-500 text-lg">*</span>
@@ -623,20 +798,6 @@ export default function NewProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-base font-semibold text-gray-700 mb-2.5">
-                    Barcode
-                  </label>
-                  <input
-                    type="text"
-                    name="barcode"
-                    value={formData.barcode}
-                    onChange={handleInputChange}
-                    placeholder="Optional"
-                    className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl text-lg font-mono transition-all duration-150 focus:outline-none focus:border-green-900 focus:ring-4 focus:ring-green-900/10"
-                  />
-                </div>
-
-                <div>
                   <label className="block text-base font-semibold text-gray-900 mb-2.5">
                     Stock Quantity
                   </label>
@@ -782,7 +943,7 @@ export default function NewProductPage() {
           {/* Right Column - Media & Status */}
           <div className="space-y-6">
             {/* Product Image */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 transition-all duration-200 hover:shadow-sm sticky top-24">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 transition-all duration-200 hover:shadow-sm lg:sticky lg:top-24">
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center">
                   <ImageIcon className="w-4 h-4 text-green-900" />
