@@ -15,29 +15,32 @@ export async function getPayments({
   try {
     const offset = (page - 1) * limit;
 
-    let query = supabaseAdmin
-      .from("orders")
-      .select(
-        `
+    let query = supabaseAdmin.from("payment_transactions").select(
+      `
         id,
-        order_number,
-        customer_email,
-        customer_first_name,
-        customer_last_name,
-        total_amount,
-        transaction_fee,
-        payment_method,
-        payment_status,
-        payment_reference,
+        paystack_reference,
+        amount,
+        currency,
+        status,
+        channel,
+        card_type,
+        card_last4,
+        card_bank,
         paid_at,
-        created_at
+        created_at,
+        order_id,
+        orders (
+          order_number,
+          customer_email,
+          customer_first_name,
+          customer_last_name
+        )
       `,
-        { count: "exact" },
-      )
-      .not("payment_reference", "is", null);
+      { count: "exact" },
+    );
 
     if (status) {
-      query = query.eq("payment_status", status);
+      query = query.eq("status", status);
     }
 
     if (startDate) {
@@ -56,8 +59,29 @@ export async function getPayments({
 
     if (error) throw error;
 
+    // Transform the data to match the UI expectations
+    const payments =
+      data?.map((payment) => ({
+        id: payment.id,
+        order_id: payment.order_id,
+        order_number: payment.orders?.order_number,
+        customer_email: payment.orders?.customer_email,
+        customer_first_name: payment.orders?.customer_first_name,
+        customer_last_name: payment.orders?.customer_last_name,
+        total_amount: payment.amount,
+        transaction_fee: 0, // Calculate if needed: amount * 0.015 + 100 (Paystack fee)
+        payment_method: payment.channel || "card",
+        payment_status: payment.status,
+        payment_reference: payment.paystack_reference,
+        card_type: payment.card_type,
+        card_last4: payment.card_last4,
+        card_bank: payment.card_bank,
+        paid_at: payment.paid_at,
+        created_at: payment.created_at,
+      })) || [];
+
     return {
-      payments: data || [],
+      payments,
       pagination: {
         page,
         limit,
@@ -78,9 +102,8 @@ export async function getPaymentStats({
 } = {}) {
   try {
     let query = supabaseAdmin
-      .from("orders")
-      .select("total_amount, transaction_fee, payment_status, created_at")
-      .not("payment_reference", "is", null);
+      .from("payment_transactions")
+      .select("amount, status, created_at");
 
     if (startDate) {
       query = query.gte("created_at", startDate);
@@ -105,12 +128,16 @@ export async function getPaymentStats({
     };
 
     data.forEach((payment) => {
-      stats.total_revenue += payment.total_amount || 0;
-      stats.total_fees += payment.transaction_fee || 0;
+      const amount = parseFloat(payment.amount) || 0;
+      stats.total_revenue += amount;
 
-      if (payment.payment_status === "paid") {
+      // Calculate Paystack fees: 1.5% + ₦100 (capped at ₦2000)
+      const fee = Math.min(amount * 0.015 + 100, 2000);
+      stats.total_fees += fee;
+
+      if (payment.status === "success") {
         stats.successful_payments++;
-      } else if (payment.payment_status === "failed") {
+      } else if (payment.status === "failed") {
         stats.failed_payments++;
       } else {
         stats.pending_payments++;
@@ -128,10 +155,22 @@ export async function getPaymentStats({
 
 export async function refundPayment(orderId, amount, reason) {
   try {
-    // In a real app, this would call Paystack's refund API
-    // For now, we'll just update the order status
+    // Update the payment transaction status
+    const { data: transaction, error: txError } = await supabaseAdmin
+      .from("payment_transactions")
+      .update({
+        status: "refunded",
+        gateway_response: `Refund: ₦${amount.toLocaleString()} - Reason: ${reason}`,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("order_id", orderId)
+      .select()
+      .single();
 
-    const { data, error } = await supabaseAdmin
+    if (txError) throw txError;
+
+    // Also update the order
+    const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .update({
         payment_status: "refunded",
@@ -142,14 +181,14 @@ export async function refundPayment(orderId, amount, reason) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (orderError) throw orderError;
 
     revalidatePath("/admin/payments");
     revalidatePath("/admin/orders");
 
     return {
       success: true,
-      data,
+      data: { transaction, order },
       message: "Refund processed successfully",
     };
   } catch (error) {
@@ -171,7 +210,6 @@ export async function getSettings() {
 
     if (error) throw error;
 
-    // Convert array to object for easier access
     const settings = {};
     data?.forEach((setting) => {
       settings[setting.key] = setting.value;

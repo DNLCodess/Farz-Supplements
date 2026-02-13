@@ -32,11 +32,10 @@ export default function AdminOrdersPage() {
   const [newStatus, setNewStatus] = useState("");
   const [imageErrors, setImageErrors] = useState({});
 
-  // Fetch all orders (admin view)
+  // Fetch all orders
   const { data, isLoading } = useQuery({
     queryKey: ["admin-orders", currentPage, statusFilter, searchQuery],
     queryFn: async () => {
-      // This would call your admin orders endpoint
       const params = new URLSearchParams({
         page: currentPage,
         limit: 20,
@@ -48,7 +47,7 @@ export default function AdminOrdersPage() {
       if (!response.ok) throw new Error("Failed to fetch orders");
       return response.json();
     },
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
   });
 
   // Fetch statistics
@@ -59,7 +58,7 @@ export default function AdminOrdersPage() {
       if (!response.ok) throw new Error("Failed to fetch stats");
       return response.json();
     },
-    staleTime: 60000, // 1 minute
+    staleTime: 60000,
   });
 
   // Update order status mutation
@@ -97,7 +96,6 @@ export default function AdminOrdersPage() {
     setImageErrors((prev) => ({ ...prev, [productId]: true }));
   };
 
-  // Status configuration
   const statusConfig = {
     pending: {
       icon: Clock,
@@ -129,12 +127,6 @@ export default function AdminOrdersPage() {
       bgColor: "bg-red-100",
       textColor: "text-red-900",
     },
-    failed: {
-      icon: XCircle,
-      label: "Failed",
-      bgColor: "bg-red-100",
-      textColor: "text-red-900",
-    },
   };
 
   const filterOptions = [
@@ -154,325 +146,324 @@ export default function AdminOrdersPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 lg:py-12">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-            Order Management
-          </h1>
-          <p className="text-lg text-gray-600">
-            Manage and track all customer orders
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-charcoal">Order Management</h1>
+        <p className="text-gray-600 mt-1">
+          Manage and track all customer orders
+        </p>
+      </div>
 
-        {/* Statistics Cards */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <ShoppingCart className="w-7 h-7 text-blue-700" />
-                </div>
-                <div>
-                  <p className="text-base text-gray-600 font-semibold">
-                    Total Orders
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {stats.total_orders || 0}
-                  </p>
-                </div>
+      {/* Statistics Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <ShoppingCart className="w-5 h-5 text-blue-700" />
               </div>
+              <span className="text-sm font-medium text-gray-600">
+                Total Orders
+              </span>
             </div>
-
-            <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center">
-                  <DollarSign className="w-7 h-7 text-green-700" />
-                </div>
-                <div>
-                  <p className="text-base text-gray-600 font-semibold">
-                    Total Revenue
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    ₦{(stats.total_revenue || 0).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <Clock className="w-7 h-7 text-amber-700" />
-                </div>
-                <div>
-                  <p className="text-base text-gray-600 font-semibold">
-                    Pending
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {stats.pending_orders || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-7 h-7 text-purple-700" />
-                </div>
-                <div>
-                  <p className="text-base text-gray-600 font-semibold">
-                    This Month
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    ₦{(stats.month_revenue || 0).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <p className="text-2xl font-bold text-charcoal">
+              {stats.total_orders || 0}
+            </p>
           </div>
-        )}
 
-        {/* Filters and Search */}
-        <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 mb-6 shadow-sm">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by order number, email, or phone..."
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-xl text-base focus:outline-none focus:border-green-900 transition-colors"
-                />
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-green-700" />
               </div>
+              <span className="text-sm font-medium text-gray-600">
+                Total Revenue
+              </span>
             </div>
+            <p className="text-2xl font-bold text-charcoal">
+              ₦{(stats.total_revenue || 0).toLocaleString()}
+            </p>
+          </div>
 
-            {/* Status Filter */}
-            <div className="flex flex-wrap gap-3">
-              {filterOptions.map((option) => (
-                <button
-                  key={option.value || "all"}
-                  onClick={() => {
-                    setStatusFilter(option.value);
-                    setCurrentPage(1);
-                  }}
-                  className={`px-5 py-3 rounded-xl font-bold transition-colors ${
-                    statusFilter === option.value
-                      ? "bg-green-900 text-white"
-                      : "bg-white border-2 border-gray-300 text-gray-900 hover:border-green-900"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-amber-700" />
+              </div>
+              <span className="text-sm font-medium text-gray-600">
+                Pending Orders
+              </span>
             </div>
+            <p className="text-2xl font-bold text-charcoal">
+              {stats.pending_orders || 0}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-purple-700" />
+              </div>
+              <span className="text-sm font-medium text-gray-600">
+                This Month
+              </span>
+            </div>
+            <p className="text-2xl font-bold text-charcoal">
+              ₦{(stats.month_revenue || 0).toLocaleString()}
+            </p>
           </div>
         </div>
+      )}
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-12 h-12 text-green-900 animate-spin" />
+      {/* Filters and Search */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by order number, email, or phone..."
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:border-green-900 transition-colors"
+              />
+            </div>
           </div>
-        )}
 
-        {/* Orders Table */}
-        {!isLoading && data?.orders && (
-          <>
-            <div className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden shadow-sm mb-6">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b-2 border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-base font-bold text-gray-900">
-                        Order
-                      </th>
-                      <th className="px-6 py-4 text-left text-base font-bold text-gray-900">
-                        Customer
-                      </th>
-                      <th className="px-6 py-4 text-left text-base font-bold text-gray-900">
-                        Date
-                      </th>
-                      <th className="px-6 py-4 text-left text-base font-bold text-gray-900">
-                        Items
-                      </th>
-                      <th className="px-6 py-4 text-left text-base font-bold text-gray-900">
-                        Total
-                      </th>
-                      <th className="px-6 py-4 text-left text-base font-bold text-gray-900">
-                        Payment
-                      </th>
-                      <th className="px-6 py-4 text-left text-base font-bold text-gray-900">
-                        Status
-                      </th>
-                      <th className="px-6 py-4 text-left text-base font-bold text-gray-900">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.orders.map((order) => {
-                      const status =
-                        statusConfig[order.status] || statusConfig.pending;
-                      const StatusIcon = status.icon;
+          {/* Status Filter */}
+          <div className="flex flex-wrap gap-3">
+            {filterOptions.map((option) => (
+              <button
+                key={option.value || "all"}
+                onClick={() => {
+                  setStatusFilter(option.value);
+                  setCurrentPage(1);
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  statusFilter === option.value
+                    ? "bg-green-900 text-white"
+                    : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
-                      return (
-                        <tr
-                          key={order.id}
-                          className="border-b-2 border-gray-200 last:border-0 hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="px-6 py-4">
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-green-900 animate-spin" />
+        </div>
+      )}
+
+      {/* Orders Table */}
+      {!isLoading && data?.orders && (
+        <>
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Order
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Customer
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Items
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Total
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Payment
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.orders.map((order) => {
+                    const status =
+                      statusConfig[order.status] || statusConfig.pending;
+                    const StatusIcon = status.icon;
+
+                    return (
+                      <tr
+                        key={order.id}
+                        className="border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="font-semibold text-green-900 hover:text-green-700 transition-colors"
+                          >
+                            #{order.order_number}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {order.customer_first_name}{" "}
+                              {order.customer_last_name}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.customer_email}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {new Date(order.created_at).toLocaleDateString(
+                            "en-NG",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            },
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            {order.order_items?.slice(0, 3).map((item) => (
+                              <div
+                                key={item.id}
+                                className="relative w-10 h-10 bg-gray-50 rounded-lg overflow-hidden"
+                              >
+                                {!imageErrors[item.id] ? (
+                                  <Image
+                                    src={
+                                      item.product_image ||
+                                      "/images/product-placeholder.png"
+                                    }
+                                    alt={item.product_name}
+                                    fill
+                                    className="object-cover"
+                                    sizes="40px"
+                                    onError={() => handleImageError(item.id)}
+                                  />
+                                ) : (
+                                  <div className="absolute inset-0 flex items-center justify-center text-xl">
+                                    🌿
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            {order.order_items?.length > 3 && (
+                              <span className="text-sm font-medium text-gray-600">
+                                +{order.order_items.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-semibold text-charcoal">
+                            ₦{parseFloat(order.total_amount).toLocaleString()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {order.payment_status === "paid" ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-900 rounded-lg text-xs font-medium">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Paid
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-900 rounded-lg text-xs font-medium">
+                              <Clock className="w-3 h-3" />
+                              Pending
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-1 ${status.bgColor} ${status.textColor} rounded-lg text-xs font-medium`}
+                          >
+                            <StatusIcon className="w-3 h-3" />
+                            {status.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
                             <Link
                               href={`/admin/orders/${order.id}`}
-                              className="font-bold text-green-900 hover:text-green-700 transition-colors"
+                              className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                              title="View Details"
                             >
-                              #{order.order_number}
+                              <Eye className="w-4 h-4" />
                             </Link>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div>
-                              <p className="font-semibold text-gray-900">
-                                {order.customer_first_name}{" "}
-                                {order.customer_last_name}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {order.customer_email}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-gray-700">
-                            {new Date(order.created_at).toLocaleDateString(
-                              "en-NG",
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              {order.order_items?.slice(0, 3).map((item) => (
-                                <div
-                                  key={item.id}
-                                  className="relative w-10 h-10 bg-gray-50 rounded-lg overflow-hidden"
-                                >
-                                  {!imageErrors[item.id] ? (
-                                    <Image
-                                      src={
-                                        item.product_image ||
-                                        "/images/product-placeholder.png"
-                                      }
-                                      alt={item.product_name}
-                                      fill
-                                      className="object-cover"
-                                      sizes="40px"
-                                      onError={() => handleImageError(item.id)}
-                                    />
-                                  ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center text-xl">
-                                      🌿
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                              {order.order_items?.length > 3 && (
-                                <span className="text-sm font-semibold text-gray-600">
-                                  +{order.order_items.length - 3}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="font-bold text-gray-900">
-                              ₦{order.total_amount.toLocaleString()}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            {order.payment_status === "paid" ? (
-                              <span className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-900 rounded-lg font-semibold text-sm">
-                                <CheckCircle2 className="w-4 h-4" />
-                                Paid
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-900 rounded-lg font-semibold text-sm">
-                                <Clock className="w-4 h-4" />
-                                Pending
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center gap-2 px-3 py-1 ${status.bgColor} ${status.textColor} rounded-lg font-semibold text-sm`}
+                            <button
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setNewStatus(order.status);
+                              }}
+                              className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                              title="Update Status"
                             >
-                              <StatusIcon className="w-4 h-4" />
-                              {status.label}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <Link
-                                href={`/admin/orders/${order.id}`}
-                                className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                                title="View Details"
-                              >
-                                <Eye className="w-5 h-5" />
-                              </Link>
-                              <button
-                                onClick={() => {
-                                  setSelectedOrder(order);
-                                  setNewStatus(order.status);
-                                }}
-                                className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-                                title="Update Status"
-                              >
-                                <Edit className="w-5 h-5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
 
-            {/* Pagination */}
-            {data.pagination && data.pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between bg-white rounded-2xl border-2 border-gray-200 p-6">
-                <p className="text-base text-gray-600">
-                  Page {data.pagination.page} of {data.pagination.totalPages}
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-gray-300 text-gray-900 rounded-xl font-bold hover:border-green-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage((p) => p + 1)}
-                    disabled={!data.pagination.hasMore}
-                    className="flex items-center gap-2 px-5 py-3 bg-green-900 text-white rounded-xl font-bold hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Next
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
+            {/* Empty State */}
+            {data.orders.length === 0 && (
+              <div className="text-center py-12">
+                <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600 font-medium">No orders found</p>
               </div>
             )}
-          </>
-        )}
-      </div>
+          </div>
+
+          {/* Pagination */}
+          {data.pagination && data.pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 p-4">
+              <p className="text-sm text-gray-600">
+                Page {data.pagination.page} of {data.pagination.totalPages}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-900 rounded-lg font-medium hover:border-green-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                  disabled={!data.pagination.hasMore}
+                  className="px-4 py-2 bg-green-900 text-white rounded-lg font-medium hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Update Status Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl animate-in zoom-in duration-200">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <h3 className="text-2xl font-bold text-charcoal mb-4">
               Update Order Status
             </h3>
             <p className="text-base text-gray-600 mb-6">
@@ -488,14 +479,14 @@ export default function AdminOrdersPage() {
                   <button
                     key={status}
                     onClick={() => setNewStatus(status)}
-                    className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 font-bold transition-colors ${
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                       newStatus === status
                         ? "border-green-900 bg-green-50"
                         : "border-gray-300 hover:border-green-900"
                     }`}
                   >
                     <Icon className="w-5 h-5" />
-                    <span>{config.label}</span>
+                    <span className="font-medium">{config.label}</span>
                   </button>
                 );
               })}
@@ -507,7 +498,7 @@ export default function AdminOrdersPage() {
                   setSelectedOrder(null);
                   setNewStatus("");
                 }}
-                className="flex-1 px-6 py-3 bg-white border-2 border-gray-300 text-gray-900 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                className="flex-1 px-6 py-3 bg-white border border-gray-300 text-gray-900 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
@@ -517,7 +508,7 @@ export default function AdminOrdersPage() {
                   updateStatusMutation.isPending ||
                   newStatus === selectedOrder.status
                 }
-                className="flex-1 px-6 py-3 bg-green-900 text-white rounded-xl font-bold hover:bg-green-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-green-900 text-white rounded-xl font-semibold hover:bg-green-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {updateStatusMutation.isPending ? (
                   <>

@@ -17,6 +17,7 @@ import {
   Calendar,
   Eye,
   RotateCcw,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -87,9 +88,9 @@ export default function PaymentsPage() {
   };
 
   const statusConfig = {
-    paid: {
+    success: {
       icon: CheckCircle2,
-      label: "Paid",
+      label: "Success",
       bgColor: "bg-green-100",
       textColor: "text-green-900",
     },
@@ -99,11 +100,23 @@ export default function PaymentsPage() {
       bgColor: "bg-amber-100",
       textColor: "text-amber-900",
     },
+    processing: {
+      icon: Loader2,
+      label: "Processing",
+      bgColor: "bg-blue-100",
+      textColor: "text-blue-900",
+    },
     failed: {
       icon: XCircle,
       label: "Failed",
       bgColor: "bg-red-100",
       textColor: "text-red-900",
+    },
+    abandoned: {
+      icon: AlertCircle,
+      label: "Abandoned",
+      bgColor: "bg-gray-100",
+      textColor: "text-gray-900",
     },
     refunded: {
       icon: RotateCcw,
@@ -204,49 +217,67 @@ export default function PaymentsPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex gap-3">
-            <button
-              onClick={() => setStatusFilter(null)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                statusFilter === null
-                  ? "bg-green-900 text-white"
-                  : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setStatusFilter("paid")}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                statusFilter === "paid"
-                  ? "bg-green-900 text-white"
-                  : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
-              }`}
-            >
-              Paid
-            </button>
-            <button
-              onClick={() => setStatusFilter("pending")}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                statusFilter === "pending"
-                  ? "bg-green-900 text-white"
-                  : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
-              }`}
-            >
-              Pending
-            </button>
-            <button
-              onClick={() => setStatusFilter("failed")}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                statusFilter === "failed"
-                  ? "bg-green-900 text-white"
-                  : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
-              }`}
-            >
-              Failed
-            </button>
-          </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => setStatusFilter(null)}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              statusFilter === null
+                ? "bg-green-900 text-white"
+                : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setStatusFilter("success")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              statusFilter === "success"
+                ? "bg-green-900 text-white"
+                : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
+            }`}
+          >
+            Success
+          </button>
+          <button
+            onClick={() => setStatusFilter("pending")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              statusFilter === "pending"
+                ? "bg-green-900 text-white"
+                : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
+            }`}
+          >
+            Pending
+          </button>
+          <button
+            onClick={() => setStatusFilter("processing")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              statusFilter === "processing"
+                ? "bg-green-900 text-white"
+                : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
+            }`}
+          >
+            Processing
+          </button>
+          <button
+            onClick={() => setStatusFilter("failed")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              statusFilter === "failed"
+                ? "bg-green-900 text-white"
+                : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
+            }`}
+          >
+            Failed
+          </button>
+          <button
+            onClick={() => setStatusFilter("abandoned")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              statusFilter === "abandoned"
+                ? "bg-green-900 text-white"
+                : "bg-white border border-gray-300 text-gray-900 hover:border-green-900"
+            }`}
+          >
+            Abandoned
+          </button>
         </div>
       </div>
 
@@ -304,7 +335,7 @@ export default function PaymentsPage() {
                     >
                       <td className="px-6 py-4">
                         <Link
-                          href={`/admin/orders/${payment.id}`}
+                          href={`/admin/orders/${payment.order_id}`}
                           className="font-semibold text-green-900 hover:text-green-700 transition-colors"
                         >
                           #{payment.order_number}
@@ -349,9 +380,9 @@ export default function PaymentsPage() {
                           <p className="font-semibold text-charcoal">
                             ₦{payment.total_amount.toLocaleString()}
                           </p>
-                          {payment.transaction_fee > 0 && (
+                          {payment.card_type && payment.card_last4 && (
                             <p className="text-xs text-gray-600">
-                              Fee: ₦{payment.transaction_fee.toLocaleString()}
+                              {payment.card_type} •••• {payment.card_last4}
                             </p>
                           )}
                         </div>
@@ -377,17 +408,17 @@ export default function PaymentsPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
                           <Link
-                            href={`/admin/orders/${payment.id}`}
+                            href={`/admin/orders/${payment.order_id}`}
                             className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                             title="View Order"
                           >
                             <Eye className="w-4 h-4" />
                           </Link>
-                          {payment.payment_status === "paid" && (
+                          {payment.payment_status === "success" && (
                             <button
                               onClick={() => {
                                 setRefundData({
-                                  orderId: payment.id,
+                                  orderId: payment.order_id,
                                   amount: payment.total_amount,
                                   reason: "",
                                 });
