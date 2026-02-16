@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Menu,
@@ -41,14 +42,12 @@ export default function Header() {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const { mutate: signOut, isPending: isSigningOut } = useSignOut();
 
-  // Prevent hydration mismatch - only access cart count on client
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const cartItemsCount = isClient ? getTotalItems() : 0;
 
-  // Handle scroll for sticky header shadow
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -57,7 +56,6 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
     setMegaMenuOpen(false);
@@ -66,7 +64,6 @@ export default function Header() {
     setAccountMenuOpen(false);
   }, [pathname]);
 
-  // Prevent body scroll when mobile menu, search, or mini cart is open
   useEffect(() => {
     if (mobileMenuOpen || searchOpen || miniCartOpen) {
       document.body.style.overflow = "hidden";
@@ -78,7 +75,6 @@ export default function Header() {
     };
   }, [mobileMenuOpen, searchOpen, miniCartOpen]);
 
-  // Close search on escape key
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape") {
@@ -91,7 +87,6 @@ export default function Header() {
     return () => window.removeEventListener("keydown", handleEscape);
   }, [searchOpen, miniCartOpen, accountMenuOpen]);
 
-  // Close account menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (accountMenuOpen && !e.target.closest(".account-menu-container")) {
@@ -109,7 +104,7 @@ export default function Header() {
 
   return (
     <>
-      {/* Top Bar - Contact Info */}
+      {/* Top Bar */}
       <div className="bg-green-900 text-white py-2 hidden lg:block">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between text-sm">
@@ -154,7 +149,6 @@ export default function Header() {
         <div className="relative">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-16 lg:h-20">
-              {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="lg:hidden p-2 -ml-2 text-gray-700 hover:text-green-900 transition-colors"
@@ -169,19 +163,14 @@ export default function Header() {
 
               {/* Logo */}
               <Link href="/" className="flex items-center gap-3 shrink-0">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-900 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg lg:text-xl">
-                    F
-                  </span>
-                </div>
-                <div className="hidden sm:block">
-                  <div className="font-bold text-green-900 text-base lg:text-xl leading-tight">
-                    Farz Supplements
-                  </div>
-                  <div className="text-xs text-gray-600 hidden lg:block">
-                    Nature&apos;s Power. Your Health.
-                  </div>
-                </div>
+                <Image
+                  src="/logo-text.png"
+                  alt="Farz Supplements"
+                  width={100}
+                  height={100}
+                  className="w-18 h-18 lg:w-28 lg:h-28 object-contain"
+                  priority
+                />
               </Link>
 
               {/* Desktop Navigation */}
@@ -195,7 +184,6 @@ export default function Header() {
                   Home
                 </Link>
 
-                {/* Products with Mega Menu */}
                 <div
                   className="relative"
                   onMouseEnter={() => setMegaMenuOpen(true)}
@@ -238,7 +226,6 @@ export default function Header() {
 
               {/* Right Actions */}
               <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
-                {/* Search Button */}
                 <button
                   onClick={() => setSearchOpen(true)}
                   className="p-2 text-gray-700 hover:text-green-900 transition-colors"
@@ -247,7 +234,6 @@ export default function Header() {
                   <Search className="w-5 h-5" />
                 </button>
 
-                {/* Wishlist with Counter */}
                 <Link
                   href="/profile?tab=wishlist"
                   className="hidden sm:flex p-2 text-gray-700 hover:text-green-900 transition-colors relative"
@@ -261,7 +247,6 @@ export default function Header() {
                   )}
                 </Link>
 
-                {/* Account - Conditional Rendering */}
                 {isAuthenticated ? (
                   <div className="relative account-menu-container">
                     <button
@@ -280,10 +265,8 @@ export default function Header() {
                       />
                     </button>
 
-                    {/* Account Dropdown Menu */}
                     {accountMenuOpen && (
                       <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
-                        {/* User Info */}
                         <div className="px-4 py-3 border-b border-gray-200">
                           <p className="text-sm font-semibold text-gray-900">
                             {user?.first_name} {user?.last_name}
@@ -299,7 +282,6 @@ export default function Header() {
                           )}
                         </div>
 
-                        {/* Menu Items */}
                         <div className="py-2">
                           <Link
                             href="/profile"
@@ -356,7 +338,6 @@ export default function Header() {
                           )}
                         </div>
 
-                        {/* Sign Out */}
                         <div className="border-t border-gray-200 pt-2">
                           <button
                             onClick={handleSignOut}
@@ -380,7 +361,6 @@ export default function Header() {
                   </Link>
                 )}
 
-                {/* Cart - Opens MiniCart */}
                 <button
                   onClick={() => setMiniCartOpen(true)}
                   className="relative p-2 text-gray-700 hover:text-green-900 transition-colors"
@@ -397,7 +377,6 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Mega Menu Portal */}
           {megaMenuOpen && (
             <div
               onMouseEnter={() => setMegaMenuOpen(true)}
@@ -409,7 +388,6 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Search Modal Overlay */}
       {searchOpen && (
         <div
           className="fixed inset-0 z-[100] bg-gray-900/60 backdrop-blur-sm transition-opacity duration-200"
@@ -420,7 +398,6 @@ export default function Header() {
               className="max-w-3xl mx-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close Button */}
               <button
                 onClick={() => setSearchOpen(false)}
                 className="ml-auto mb-4 p-2 text-white/80 hover:text-white transition-colors flex items-center gap-2 text-sm"
@@ -430,7 +407,6 @@ export default function Header() {
                 <X className="w-5 h-5" />
               </button>
 
-              {/* Search Bar with entrance animation */}
               <div className="animate-in slide-in-from-top-4 fade-in duration-300">
                 <SearchBar
                   placeholder="Search for supplements, teas, wellness products..."
@@ -442,10 +418,7 @@ export default function Header() {
         </div>
       )}
 
-      {/* Mini Cart Drawer */}
       <MiniCart isOpen={miniCartOpen} onClose={() => setMiniCartOpen(false)} />
-
-      {/* Mobile Navigation Drawer */}
       <MobileNav
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}

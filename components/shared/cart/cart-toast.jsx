@@ -67,7 +67,7 @@ export default function CartToast({ isVisible, onClose, productName }) {
               setShow(false);
               setTimeout(onClose, 300);
             }}
-            className="p-1 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+            className="p-1 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
             aria-label="Close"
           >
             <X className="w-5 h-5" />

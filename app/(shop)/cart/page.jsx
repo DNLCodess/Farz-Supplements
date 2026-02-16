@@ -145,7 +145,7 @@ export default function CartPage() {
                 >
                   <div className="flex gap-3 sm:gap-4 lg:gap-6">
                     {/* Product Image */}
-                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden">
+                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 shrink-0 bg-gray-50 rounded-lg overflow-hidden">
                       {!imageErrors[itemKey] ? (
                         <Image
                           src={
@@ -182,7 +182,7 @@ export default function CartPage() {
                         </div>
                         <button
                           onClick={() => removeItem(itemId)}
-                          className="p-1.5 sm:p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                          className="p-1.5 sm:p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
                           aria-label="Remove item"
                         >
                           <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -300,7 +300,7 @@ export default function CartPage() {
                       {itemStockQuantity !== null &&
                         itemQuantity >= itemStockQuantity && (
                           <div className="mt-3 flex items-center gap-2 text-orange-700 bg-orange-50 px-3 py-2 rounded-lg">
-                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                            <AlertCircle className="w-4 h-4 shrink-0" />
                             <p className="text-xs sm:text-sm font-medium">
                               Maximum available quantity reached
                             </p>
@@ -310,7 +310,7 @@ export default function CartPage() {
                       {/* Invalid Price Warning */}
                       {itemPrice === 0 && (
                         <div className="mt-3 flex items-center gap-2 text-red-700 bg-red-50 px-3 py-2 rounded-lg">
-                          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                          <AlertCircle className="w-4 h-4 shrink-0" />
                           <p className="text-xs sm:text-sm font-medium">
                             Price unavailable. Please refresh or contact
                             support.
@@ -341,9 +341,9 @@ export default function CartPage() {
               </h2>
 
               {/* Shipping Info */}
-              <div className="mb-5 sm:mb-6 p-3 sm:p-4 bg-green-50 rounded-lg border-2 border-green-200">
+              {/* <div className="mb-5 sm:mb-6 p-3 sm:p-4 bg-green-50 rounded-lg border-2 border-green-200">
                 <div className="flex items-start gap-2 sm:gap-3">
-                  <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-green-700 flex-shrink-0 mt-1" />
+                  <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-green-700 shrink-0 mt-1" />
                   <div>
                     <p className="font-bold text-green-900 mb-1 text-sm sm:text-base">
                       {subtotal > 50000
@@ -351,13 +351,13 @@ export default function CartPage() {
                         : "Almost there for free shipping"}
                     </p>
                     <p className="text-xs sm:text-sm text-green-800">
-                      {subtotal > 50000
+                      {subtotal > 100000000
                         ? "Your order qualifies for free delivery"
                         : `Add ₦${Math.max(0, 50000 - subtotal).toLocaleString()} more for free shipping`}
                     </p>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Promo Code */}
               <div className="mb-5 sm:mb-6">

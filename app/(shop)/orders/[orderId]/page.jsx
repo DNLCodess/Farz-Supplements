@@ -253,7 +253,7 @@ export default function OrderDetailPage({ params }) {
         {showSuccessBanner && (
           <div className="max-w-4xl mx-auto mb-8 bg-green-50 border border-green-200 rounded-xl p-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1">
@@ -273,7 +273,7 @@ export default function OrderDetailPage({ params }) {
         {showFailureBanner && (
           <div className="max-w-4xl mx-auto mb-8 bg-red-50 border border-red-200 rounded-xl p-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shrink-0">
                 <XCircle className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1">

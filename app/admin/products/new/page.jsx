@@ -353,7 +353,7 @@ export default function NewProductPage() {
               <button
                 type="button"
                 onClick={() => router.push("/admin/products")}
-                className="flex-shrink-0 p-2.5 hover:bg-gray-100 rounded-xl transition-all duration-150 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="shrink-0 p-2.5 hover:bg-gray-100 rounded-xl transition-all duration-150 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Back to products"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-700" />

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   ChevronRight,
@@ -56,15 +57,13 @@ export default function MobileNav({ isOpen, onClose }) {
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-900 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">F</span>
-            </div>
-            <div>
-              <div className="font-bold text-green-900 text-base">
-                Farz Supplements
-              </div>
-              <div className="text-xs text-gray-600">Menu</div>
-            </div>
+            <Image
+              src="/logo-text.png"
+              alt="Farz Supplements"
+              width={40}
+              height={40}
+              className="w-18 h-18 lg:w-28 lg:h-28 object-contain"
+            />
           </div>
           <button
             onClick={onClose}
@@ -212,11 +211,11 @@ export default function MobileNav({ isOpen, onClose }) {
           </div>
           <div className="space-y-2 text-sm text-gray-700">
             <a
-              href="tel:+2348069662020"
+              href="tel:+2349123368239"
               className="flex items-center gap-2 hover:text-green-900"
             >
               <Phone className="w-4 h-4" />
-              <span>+234 806 966 2020</span>
+              <span>+2349123368239</span>
             </a>
             <div className="text-xs text-gray-600">
               Delivery: Lagos (2 days) | Outside Lagos (2 working days)

@@ -155,15 +155,15 @@ function PaymentVerifyContent() {
           </p>
           <ul className="text-sm text-blue-800 space-y-2">
             <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-600" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-blue-600" />
               <span>Your order has been created</span>
             </li>
             <li className="flex items-start gap-2">
-              <Loader2 className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-600 animate-spin" />
+              <Loader2 className="w-4 h-4 shrink-0 mt-0.5 text-blue-600 animate-spin" />
               <span>Waiting for payment confirmation from Paystack</span>
             </li>
             <li className="flex items-start gap-2">
-              <Clock className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-600" />
+              <Clock className="w-4 h-4 shrink-0 mt-0.5 text-blue-600" />
               <span>This usually takes less than 30 seconds</span>
             </li>
           </ul>

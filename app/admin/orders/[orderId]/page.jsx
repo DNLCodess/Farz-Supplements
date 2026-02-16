@@ -200,7 +200,7 @@ export default function OrderDetailsPage() {
                   key={item.id}
                   className="flex items-center gap-4 pb-4 border-b border-gray-200 last:border-0"
                 >
-                  <div className="relative w-20 h-20 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="relative w-20 h-20 bg-gray-50 rounded-lg overflow-hidden shrink-0">
                     {!imageErrors[item.id] ? (
                       <Image
                         src={
@@ -444,7 +444,7 @@ export default function OrderDetailsPage() {
             <h2 className="text-xl font-bold text-charcoal mb-4">Timeline</h2>
             <div className="space-y-4">
               <div className="flex gap-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center shrink-0">
                   <Calendar className="w-4 h-4 text-green-700" />
                 </div>
                 <div>
@@ -456,7 +456,7 @@ export default function OrderDetailsPage() {
               </div>
               {order.paid_at && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-4 h-4 text-green-700" />
                   </div>
                   <div>
@@ -471,7 +471,7 @@ export default function OrderDetailsPage() {
               )}
               {order.cancelled_at && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center shrink-0">
                     <XCircle className="w-4 h-4 text-red-700" />
                   </div>
                   <div>
@@ -490,7 +490,7 @@ export default function OrderDetailsPage() {
                 </div>
               )}
               <div className="flex gap-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
                   <Clock className="w-4 h-4 text-gray-700" />
                 </div>
                 <div>

@@ -419,7 +419,7 @@ export default function SettingsPage() {
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex gap-3">
-                      <Shield className="w-5 h-5 text-blue-700 flex-shrink-0 mt-0.5" />
+                      <Shield className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
                       <div>
                         <h4 className="font-semibold text-blue-900 text-sm mb-1">
                           Security Notice

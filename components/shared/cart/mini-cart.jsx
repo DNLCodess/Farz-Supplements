@@ -90,7 +90,7 @@ export default function MiniCart({ isOpen, onClose }) {
                   <Link
                     href={`/products/${item.product?.slug}`}
                     onClick={onClose}
-                    className="relative w-20 h-20 flex-shrink-0 bg-white rounded-lg overflow-hidden"
+                    className="relative w-20 h-20 shrink-0 bg-white rounded-lg overflow-hidden"
                   >
                     {!imageErrors[item.product_id] ? (
                       <Image

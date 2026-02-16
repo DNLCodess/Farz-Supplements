@@ -488,12 +488,12 @@ export default function CheckoutPage() {
         {checkoutError && (
           <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
             <div className="flex items-start gap-2 sm:gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-700 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-red-700 shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-red-900 mb-1 text-sm sm:text-base">
                   Payment Failed
                 </h3>
-                <p className="text-xs sm:text-sm text-red-800 mb-2 break-words">
+                <p className="text-xs sm:text-sm text-red-800 mb-2 wrap-break-word">
                   {checkoutError}
                 </p>
                 <button
@@ -944,7 +944,7 @@ export default function CheckoutPage() {
 
                   <div className="p-3 sm:p-4 bg-green-50 rounded-lg border border-green-200 mb-4 sm:mb-5">
                     <div className="flex items-start gap-2">
-                      <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-green-700 flex-shrink-0 mt-0.5" />
+                      <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-green-700 shrink-0 mt-0.5" />
                       <div>
                         <p className="font-bold text-green-900 mb-0.5 text-xs sm:text-sm">
                           Secure Payment
@@ -1017,7 +1017,7 @@ export default function CheckoutPage() {
 
                   return (
                     <div key={item.id} className="flex gap-2 sm:gap-3">
-                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden">
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 shrink-0 bg-gray-50 rounded-lg overflow-hidden">
                         {!imageErrors[item.id] ? (
                           <Image
                             src={

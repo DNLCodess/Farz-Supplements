@@ -92,7 +92,7 @@ export default function AddressSelector({
               >
                 <div className="flex items-start gap-3">
                   <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
                       isSelected
                         ? "border-green-900 bg-green-900"
                         : "border-gray-300"

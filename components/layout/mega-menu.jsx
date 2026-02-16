@@ -99,9 +99,7 @@ export default function MegaMenu() {
                   className="group p-4 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="text-2xl flex-shrink-0">
-                      {category.icon}
-                    </div>
+                    <div className="text-2xl shrink-0">{category.icon}</div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-900 group-hover:text-green-900 transition-colors mb-0.5">
                         {category.name}
@@ -153,7 +151,7 @@ export default function MegaMenu() {
                   className="group block p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                 >
                   <div className="flex gap-3">
-                    <div className="w-16 h-16 bg-gray-50 rounded-lg flex-shrink-0 flex items-center justify-center border border-gray-100">
+                    <div className="w-16 h-16 bg-gray-50 rounded-lg shrink-0 flex items-center justify-center border border-gray-100">
                       <span className="text-2xl">🌿</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -170,14 +168,6 @@ export default function MegaMenu() {
             </div>
 
             {/* Promo Banner */}
-            <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-100">
-              <div className="text-sm font-semibold text-green-900 mb-1">
-                Special Offer
-              </div>
-              <div className="text-sm text-gray-600">
-                Free delivery on orders over ₦20,000
-              </div>
-            </div>
           </div>
         </div>
       </div>

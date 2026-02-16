@@ -445,21 +445,7 @@ export default function ProductDetailClient({
             {/* Trust Badges */}
             <div className="grid grid-cols-2 gap-3 pt-4 border-t border-neutral-200">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-md bg-neutral-100 flex items-center justify-center flex-shrink-0">
-                  <Truck className="w-5 h-5 text-neutral-700" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-neutral-900">
-                    Free Delivery
-                  </p>
-                  <p className="text-sm text-neutral-600">
-                    On orders over ₦10,000
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-md bg-neutral-100 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-md bg-neutral-100 flex items-center justify-center shrink-0">
                   <ShieldCheck className="w-5 h-5 text-neutral-700" />
                 </div>
                 <div>
@@ -473,7 +459,7 @@ export default function ProductDetailClient({
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-md bg-neutral-100 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-md bg-neutral-100 flex items-center justify-center shrink-0">
                   <RotateCcw className="w-5 h-5 text-neutral-700" />
                 </div>
                 <div>
@@ -487,7 +473,7 @@ export default function ProductDetailClient({
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-md bg-neutral-100 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-md bg-neutral-100 flex items-center justify-center shrink-0">
                   <Check className="w-5 h-5 text-neutral-700" />
                 </div>
                 <div>

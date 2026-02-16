@@ -62,7 +62,7 @@ function HeroSection() {
             {/* Trust Indicators */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
                   <Leaf className="w-5 h-5 text-green-900" />
                 </div>
                 <div>
@@ -71,7 +71,7 @@ function HeroSection() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
                   <Shield className="w-5 h-5 text-green-900" />
                 </div>
                 <div>
@@ -82,7 +82,7 @@ function HeroSection() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
                   <Truck className="w-5 h-5 text-green-900" />
                 </div>
                 <div>
@@ -91,7 +91,7 @@ function HeroSection() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
                   <Award className="w-5 h-5 text-green-900" />
                 </div>
                 <div>
@@ -294,7 +294,7 @@ function CTASection() {
           </h2>
           <p className="text-lg lg:text-xl text-green-50 max-w-2xl mx-auto leading-relaxed">
             Join thousands of Nigerians who trust Farz Supplements for their
-            natural health needs. Free delivery on orders over ₦20,000.
+            natural health needs.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">

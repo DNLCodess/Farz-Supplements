@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Phone,
   Mail,
@@ -13,28 +14,24 @@ export default function Footer() {
 
   return (
     <footer className="bg-charcoal text-white mt-auto">
-      {/* Main Footer Content */}
       <div className="container mx-auto px-4 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
           {/* Company Info */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">F</span>
-              </div>
-              <div>
-                <div className="font-bold text-lg">Farz Supplements</div>
-                <div className="text-sm text-gray-400">
-                  Nature&lsquo;s Power. Your Health.
-                </div>
-              </div>
+              <Image
+                src="/logo-text.png"
+                alt="Farz Supplements"
+                width={48}
+                height={48}
+                className="w-12 h-12 lg:w-28 lg:h-28 object-contain"
+              />
             </div>
             <p className="text-gray-300 text-sm leading-relaxed mb-4">
               Premium herbal supplements and wellness products for your natural
               health journey.
             </p>
 
-            {/* Social Links */}
             <div className="flex items-center gap-3">
               <a
                 href="https://facebook.com"
@@ -166,13 +163,13 @@ export default function Footer() {
             <ul className="space-y-4 text-sm">
               <li>
                 <a
-                  href="tel:+2348069662020"
+                  href="tel:+2349123368239"
                   className="flex items-start gap-3 text-gray-300 hover:text-green-500 transition-colors group"
                 >
-                  <Phone className="w-5 h-5 flex-shrink-0 mt-0.5 text-green-500 group-hover:text-green-400" />
+                  <Phone className="w-5 h-5 shrink-0 mt-0.5 text-green-500 group-hover:text-green-400" />
                   <div>
                     <div className="font-medium text-white mb-1">Phone</div>
-                    <div>+234 806 966 2020</div>
+                    <div>+2349123368239</div>
                     <div className="text-xs text-gray-400 mt-1">
                       Mon-Sat: 9am - 6pm
                     </div>
@@ -181,21 +178,19 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:sales@farzsupplements.com.ng"
+                  href="mailto:farstore02@gmail.com"
                   className="flex items-start gap-3 text-gray-300 hover:text-green-500 transition-colors group"
                 >
-                  <Mail className="w-5 h-5 flex-shrink-0 mt-0.5 text-green-500 group-hover:text-green-400" />
+                  <Mail className="w-5 h-5 shrink-0 mt-0.5 text-green-500 group-hover:text-green-400" />
                   <div>
                     <div className="font-medium text-white mb-1">Email</div>
-                    <div className="break-all">
-                      sales@farzsupplements.com.ng
-                    </div>
+                    <div className="break-all">farstore02@gmail.com</div>
                   </div>
                 </a>
               </li>
               <li>
                 <div className="flex items-start gap-3 text-gray-300">
-                  <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5 text-green-500" />
+                  <MapPin className="w-5 h-5 shrink-0 mt-0.5 text-green-500" />
                   <div>
                     <div className="font-medium text-white mb-1">Location</div>
                     <div>Lagos, Nigeria</div>
@@ -206,7 +201,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Newsletter Section */}
+        {/* Newsletter */}
         <div className="mt-12 pt-8 border-t border-gray-700">
           <div className="max-w-2xl mx-auto text-center">
             <h3 className="font-bold text-lg md:text-xl mb-2">
@@ -240,7 +235,6 @@ export default function Footer() {
             <div className="flex items-center gap-4 flex-wrap justify-center md:justify-start">
               <span className="text-sm text-gray-400">We Accept:</span>
               <div className="flex items-center gap-3">
-                {/* Payment method placeholders */}
                 <div className="px-3 py-1.5 bg-gray-700 rounded text-xs font-medium">
                   Card
                 </div>
@@ -340,7 +334,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* WhatsApp Floating Button */}
+      {/* WhatsApp Button */}
       <a
         href="https://wa.me/2348069662020"
         target="_blank"

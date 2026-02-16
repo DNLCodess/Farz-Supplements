@@ -13,7 +13,7 @@ export default function Breadcrumbs({ items }) {
           return (
             <li key={index} className="flex items-center gap-2">
               {index > 0 && (
-                <ChevronRight className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 text-neutral-400 shrink-0" />
               )}
               {isLast ? (
                 <span className="text-sm text-neutral-900 font-medium truncate max-w-[200px]">

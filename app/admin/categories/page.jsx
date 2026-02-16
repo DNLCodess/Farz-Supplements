@@ -158,7 +158,7 @@ export default function CategoriesPage() {
           {/* Expand/Collapse */}
           <button
             onClick={() => toggleExpanded(category.id)}
-            className={`flex-shrink-0 w-6 h-6 flex items-center justify-center ${
+            className={`shrink-0 w-6 h-6 flex items-center justify-center ${
               !hasChildren ? "invisible" : ""
             }`}
           >
@@ -171,12 +171,12 @@ export default function CategoriesPage() {
           </button>
 
           {/* Drag Handle */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
           </div>
 
           {/* Category Icon */}
-          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
             <FolderTree className="w-5 h-5 text-green-700" />
           </div>
 
@@ -196,7 +196,7 @@ export default function CategoriesPage() {
           </div>
 
           {/* Status Badge */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             {category.is_active ? (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-900 rounded-lg text-xs font-medium">
                 <Eye className="w-3 h-3" />
@@ -211,7 +211,7 @@ export default function CategoriesPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => handleEdit(category)}
               className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"

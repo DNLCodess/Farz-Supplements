@@ -234,7 +234,7 @@ export default function AdminDashboard() {
                 href={`/admin/orders/${order.id}`}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                   <ShoppingCart className="w-4 h-4 text-blue-700" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
       {stats?.low_stock_products > 0 && (
         <div className="bg-warning-50 border border-warning-200 rounded-xl p-6">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 bg-warning-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 bg-warning-600 rounded-lg flex items-center justify-center shrink-0">
               <Package className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">

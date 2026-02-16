@@ -37,6 +37,7 @@ Farz Supplements is a modern e-commerce platform built to replace an overly comp
 ### Problem Statement
 
 The previous website suffered from:
+
 - Complex navigation with too many nested categories
 - Small, hard-to-read text
 - Slow page loads and poor mobile experience
@@ -46,6 +47,7 @@ The previous website suffered from:
 ### Solution
 
 A completely redesigned platform featuring:
+
 - ✅ Clean, intuitive interface with large, readable typography (minimum 16px)
 - ✅ Sub-2.5s page loads with Lighthouse scores 90+
 - ✅ Simple 2-level category structure
@@ -60,6 +62,7 @@ A completely redesigned platform featuring:
 ### Customer-Facing Features
 
 **🛍️ Shopping Experience**
+
 - Advanced product search with autocomplete and suggestions
 - Real-time filtering by category, price range, and stock status
 - Product quick view and detailed product pages
@@ -69,6 +72,7 @@ A completely redesigned platform featuring:
 - Recently viewed products
 
 **💳 Checkout & Payments**
+
 - Single-page checkout with progress indicator
 - Multiple payment methods (Paystack integration)
 - Saved addresses for returning customers
@@ -77,6 +81,7 @@ A completely redesigned platform featuring:
 - Invoice generation and download
 
 **👤 User Accounts**
+
 - Secure authentication (Supabase Auth)
 - Order history and tracking
 - Saved addresses
@@ -86,6 +91,7 @@ A completely redesigned platform featuring:
 ### Admin Features
 
 **📊 Dashboard**
+
 - Real-time sales metrics
 - Revenue analytics with charts
 - Order status overview
@@ -93,6 +99,7 @@ A completely redesigned platform featuring:
 - Customer insights
 
 **📦 Product Management**
+
 - Full CRUD operations
 - Bulk product actions
 - Image upload with optimization
@@ -102,6 +109,7 @@ A completely redesigned platform featuring:
 - CSV import/export
 
 **🛒 Order Management**
+
 - Order list with advanced filtering
 - Order status updates
 - Tracking information management
@@ -110,6 +118,7 @@ A completely redesigned platform featuring:
 - Order export (CSV)
 
 **👥 Customer Management**
+
 - Customer database
 - Order history per customer
 - Contact information
@@ -120,6 +129,7 @@ A completely redesigned platform featuring:
 ## 🛠 Tech Stack
 
 ### Frontend
+
 ```javascript
 - Next.js 14+ (App Router, Pure JSX)
 - React 18+ (Server & Client Components)
@@ -130,6 +140,7 @@ A completely redesigned platform featuring:
 ```
 
 ### Backend & Database
+
 ```javascript
 - Supabase (PostgreSQL database)
 - Supabase Auth (Authentication)
@@ -138,6 +149,7 @@ A completely redesigned platform featuring:
 ```
 
 ### Payments & Services
+
 ```javascript
 - Paystack (Payment processing)
 - Google Analytics 4 (Analytics)
@@ -145,6 +157,7 @@ A completely redesigned platform featuring:
 ```
 
 ### Development & Deployment
+
 ```javascript
 - Vercel (Hosting & CI/CD)
 - Git & GitHub (Version control)
@@ -160,6 +173,7 @@ A completely redesigned platform featuring:
 The design prioritizes accessibility and readability for a mature demographic:
 
 **Typography**
+
 - **Font:** Inter - chosen for excellent readability and clear number differentiation
 - **Minimum size:** 16px body text (no exceptions)
 - **Heading hierarchy:** 36px (H1) → 28px (H2) → 22px (H3)
@@ -167,6 +181,7 @@ The design prioritizes accessibility and readability for a mature demographic:
 - **High contrast:** WCAG AAA compliant where possible
 
 **Color Palette**
+
 ```css
 Primary:     #2D5016 (Forest Green)
 Secondary:   #7A9D54 (Sage Green)
@@ -178,6 +193,7 @@ Error:       #F5222D
 ```
 
 **Design Principles**
+
 1. **Clarity Over Cleverness** - Simple, predictable layouts
 2. **Speed First** - Sub-1 second interactions
 3. **Touch-Friendly** - Minimum 44px touch targets
@@ -212,6 +228,7 @@ Error:       #F5222D
 ### Database Schema
 
 **Core Tables:**
+
 - `products` - Product catalog with pricing and inventory
 - `categories` - Hierarchical category structure
 - `customers` - User profiles
@@ -224,6 +241,7 @@ Error:       #F5222D
 - `site_settings` - Configurable site settings
 
 **Key Features:**
+
 - Row Level Security (RLS) on all tables
 - Indexed columns for performance
 - Cascading deletes for data integrity
@@ -281,16 +299,17 @@ SEO:           100/100 🔍
 
 ### Core Web Vitals
 
-| Metric | Target | Achieved |
-|--------|--------|----------|
-| Largest Contentful Paint (LCP) | < 2.5s | 1.8s ✅ |
-| First Input Delay (FID) | < 100ms | 45ms ✅ |
-| Cumulative Layout Shift (CLS) | < 0.1 | 0.05 ✅ |
-| Time to Interactive (TTI) | < 3.5s | 2.9s ✅ |
+| Metric                         | Target  | Achieved |
+| ------------------------------ | ------- | -------- |
+| Largest Contentful Paint (LCP) | < 2.5s  | 1.8s ✅  |
+| First Input Delay (FID)        | < 100ms | 45ms ✅  |
+| Cumulative Layout Shift (CLS)  | < 0.1   | 0.05 ✅  |
+| Time to Interactive (TTI)      | < 3.5s  | 2.9s ✅  |
 
 ### Performance Optimizations
 
 **Image Optimization**
+
 - Next.js Image component with automatic optimization
 - WebP format with JPEG fallback
 - Responsive images with srcset
@@ -299,6 +318,7 @@ SEO:           100/100 🔍
 - Supabase CDN integration
 
 **Code Optimization**
+
 - Route-based code splitting (automatic)
 - Dynamic imports for heavy components
 - Tree-shaking unused code
@@ -306,6 +326,7 @@ SEO:           100/100 🔍
 - Minification and compression
 
 **Caching Strategy**
+
 - Static generation for product pages
 - Incremental Static Regeneration (ISR)
 - React Query caching for API calls
@@ -313,6 +334,7 @@ SEO:           100/100 🔍
 - Browser caching headers (max-age, stale-while-revalidate)
 
 **Database Optimization**
+
 - Indexed columns: slug, sku, category_id, customer_id
 - Connection pooling
 - Query optimization (avoid N+1 queries)
@@ -328,35 +350,40 @@ SEO:           100/100 🔍
 <summary><b>Home Page</b></summary>
 
 ![Home Page](./docs/screenshots/home.png)
-*Clean hero section with featured products and category navigation*
+_Clean hero section with featured products and category navigation_
+
 </details>
 
 <details>
 <summary><b>Product Listing with Filters</b></summary>
 
 ![Product Listing](./docs/screenshots/products.png)
-*Advanced search and filtering with real-time results*
+_Advanced search and filtering with real-time results_
+
 </details>
 
 <details>
 <summary><b>Product Detail Page</b></summary>
 
 ![Product Detail](./docs/screenshots/product-detail.png)
-*Comprehensive product information with image gallery*
+_Comprehensive product information with image gallery_
+
 </details>
 
 <details>
 <summary><b>Shopping Cart</b></summary>
 
 ![Shopping Cart](./docs/screenshots/cart.png)
-*Clean cart interface with real-time updates*
+_Clean cart interface with real-time updates_
+
 </details>
 
 <details>
 <summary><b>Checkout Process</b></summary>
 
 ![Checkout](./docs/screenshots/checkout.png)
-*Streamlined single-page checkout with progress indicator*
+_Streamlined single-page checkout with progress indicator_
+
 </details>
 
 ### Admin Panel
@@ -365,21 +392,24 @@ SEO:           100/100 🔍
 <summary><b>Admin Dashboard</b></summary>
 
 ![Dashboard](./docs/screenshots/admin-dashboard.png)
-*Real-time metrics and sales analytics*
+_Real-time metrics and sales analytics_
+
 </details>
 
 <details>
 <summary><b>Product Management</b></summary>
 
 ![Product Management](./docs/screenshots/admin-products.png)
-*Comprehensive product management with bulk actions*
+_Comprehensive product management with bulk actions_
+
 </details>
 
 <details>
 <summary><b>Order Management</b></summary>
 
 ![Order Management](./docs/screenshots/admin-orders.png)
-*Order tracking and status management*
+_Order tracking and status management_
+
 </details>
 
 ---
@@ -389,7 +419,7 @@ SEO:           100/100 🔍
 ### Prerequisites
 
 ```bash
-Node.js 18+ 
+Node.js 18+
 npm or yarn
 Supabase account
 Paystack account (for payments)
@@ -398,12 +428,14 @@ Paystack account (for payments)
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/yourusername/farz-ecommerce.git
 cd farz-ecommerce
 ```
 
 2. **Install dependencies**
+
 ```bash
 npm install
 # or
@@ -411,11 +443,13 @@ yarn install
 ```
 
 3. **Set up environment variables**
+
 ```bash
 cp .env.example .env.local
 ```
 
 Edit `.env.local` with your credentials:
+
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -434,6 +468,7 @@ NEXT_PUBLIC_GA_ID=your_google_analytics_id
 ```
 
 4. **Set up Supabase database**
+
 ```bash
 # Run the database migration script
 npm run db:migrate
@@ -443,6 +478,7 @@ npm run db:seed
 ```
 
 5. **Run the development server**
+
 ```bash
 npm run dev
 # or
@@ -450,7 +486,7 @@ yarn dev
 ```
 
 6. **Open your browser**
-Navigate to [http://localhost:3000](http://localhost:3000)
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
 ### Database Setup
 
@@ -544,6 +580,7 @@ farz-ecommerce/
 ### Why Next.js 14 App Router?
 
 **Benefits:**
+
 - Server Components for better performance
 - Built-in image optimization
 - File-based routing with layouts
@@ -554,6 +591,7 @@ farz-ecommerce/
 ### Why Supabase?
 
 **Advantages:**
+
 - PostgreSQL (reliable, scalable)
 - Real-time subscriptions
 - Built-in authentication
@@ -563,6 +601,7 @@ farz-ecommerce/
 - Generous free tier
 
 **vs Building Custom Backend:**
+
 - 70% faster development time
 - Lower infrastructure costs
 - Built-in security best practices
@@ -572,6 +611,7 @@ farz-ecommerce/
 ### Why Tailwind CSS?
 
 **Rationale:**
+
 - Utility-first approach = faster development
 - Excellent for responsive design
 - Smaller bundle size (tree-shaking)
@@ -582,6 +622,7 @@ farz-ecommerce/
 ### Why Pure JSX (No TypeScript)?
 
 **Project-Specific Decision:**
+
 - Faster prototyping for MVP
 - Lower learning curve for team
 - Reduced build complexity
@@ -593,11 +634,11 @@ farz-ecommerce/
 ### Why React Query + Zustand?
 
 **State Management Strategy:**
+
 - **React Query:** Server state (products, orders)
   - Automatic caching
   - Background refetching
   - Optimistic updates
-  
 - **Zustand:** Client state (cart, UI state)
   - Lightweight (1kb)
   - Simple API
@@ -605,6 +646,7 @@ farz-ecommerce/
   - Easy debugging
 
 **vs Redux:**
+
 - 80% less code
 - Easier to learn
 - Better performance
@@ -616,10 +658,11 @@ farz-ecommerce/
 
 ### Challenge 1: Optimizing for 35+ Users
 
-**Problem:** 
+**Problem:**
 Previous site had small text and complex navigation, frustrating older users.
 
 **Solution:**
+
 - Minimum 16px body text (18px preferred)
 - Inter font for clarity and readability
 - High contrast ratios (4.5:1 minimum)
@@ -628,17 +671,18 @@ Previous site had small text and complex navigation, frustrating older users.
 - Generous spacing and whitespace
 - Clear visual hierarchy
 
-**Result:** 
+**Result:**
 45% reduction in support calls about "can't read text" or "can't find products"
 
 ---
 
 ### Challenge 2: Sub-2.5s Page Loads
 
-**Problem:** 
+**Problem:**
 Old site took 8-12 seconds to load with many products and images.
 
 **Solution:**
+
 - Next.js Image component (automatic optimization)
 - WebP format with JPEG fallback
 - Lazy loading below-fold images
@@ -648,12 +692,14 @@ Old site took 8-12 seconds to load with many products and images.
 - Code splitting by route
 - React Query caching
 
-**Result:** 
+**Result:**
+
 - Homepage: 1.8s LCP
 - Product pages: 2.1s LCP
 - Lighthouse score: 95+
 
 **Implementation:**
+
 ```javascript
 // Next.js Image with optimization
 <Image
@@ -673,10 +719,11 @@ Old site took 8-12 seconds to load with many products and images.
 
 ### Challenge 3: Real-Time Cart Synchronization
 
-**Problem:** 
+**Problem:**
 Cart state needed to persist across devices and sessions.
 
 **Solution:**
+
 - Zustand for local cart state (instant updates)
 - Supabase for cart persistence (cross-device)
 - Optimistic UI updates (no loading spinners)
@@ -684,32 +731,32 @@ Cart state needed to persist across devices and sessions.
 - Conflict resolution strategy
 
 **Implementation:**
+
 ```javascript
 // Cart store with Supabase sync
 export const useCartStore = create((set, get) => ({
   items: [],
-  
+
   addItem: async (product, quantity) => {
     // Optimistic update
-    set(state => ({
-      items: [...state.items, { product, quantity }]
-    }))
-    
+    set((state) => ({
+      items: [...state.items, { product, quantity }],
+    }));
+
     // Sync to Supabase (debounced)
-    await syncCartToSupabase(get().items)
+    await syncCartToSupabase(get().items);
   },
-  
+
   // Load cart on mount
   loadCart: async () => {
-    const { data } = await supabase
-      .from('cart')
-      .select('*')
-    set({ items: data })
-  }
-}))
+    const { data } = await supabase.from("cart").select("*");
+    set({ items: data });
+  },
+}));
 ```
 
 **Result:**
+
 - Instant UI updates (0ms perceived latency)
 - Cart persists across devices
 - Works offline (with service worker)
@@ -718,10 +765,11 @@ export const useCartStore = create((set, get) => ({
 
 ### Challenge 4: Robust Product Search
 
-**Problem:** 
+**Problem:**
 Users needed to find specific products quickly among 500+ items.
 
 **Solution:**
+
 - Full-text search with PostgreSQL
 - Debounced search input (300ms)
 - Autocomplete suggestions
@@ -731,14 +779,15 @@ Users needed to find specific products quickly among 500+ items.
 - Filter + search combination
 
 **Implementation:**
+
 ```sql
 -- PostgreSQL full-text search
-CREATE INDEX products_search_idx ON products 
+CREATE INDEX products_search_idx ON products
 USING GIN (to_tsvector('english', name || ' ' || description));
 
 -- Search query
 SELECT * FROM products
-WHERE to_tsvector('english', name || ' ' || description) 
+WHERE to_tsvector('english', name || ' ' || description)
   @@ plainto_tsquery('english', 'ginger tea')
 ORDER BY ts_rank(
   to_tsvector('english', name || ' ' || description),
@@ -747,6 +796,7 @@ ORDER BY ts_rank(
 ```
 
 **Result:**
+
 - Search results in < 200ms
 - 85% search success rate
 - Reduced "product not found" support tickets by 60%
@@ -755,10 +805,11 @@ ORDER BY ts_rank(
 
 ### Challenge 5: Payment Integration
 
-**Problem:** 
+**Problem:**
 Needed secure, reliable payment processing for Nigerian market.
 
 **Solution:**
+
 - Paystack integration (Nigerian-focused)
 - Webhook verification
 - Payment status tracking
@@ -767,6 +818,7 @@ Needed secure, reliable payment processing for Nigerian market.
 - Admin refund interface
 
 **Security Measures:**
+
 - Payment verification on server-side
 - Webhook signature validation
 - No sensitive data stored client-side
@@ -776,10 +828,11 @@ Needed secure, reliable payment processing for Nigerian market.
 
 ### Challenge 6: Admin Panel Performance with Large Datasets
 
-**Problem:** 
+**Problem:**
 Loading 1000+ orders caused browser slowdown.
 
 **Solution:**
+
 - Server-side pagination
 - Virtual scrolling for large lists
 - Debounced search
@@ -787,20 +840,22 @@ Loading 1000+ orders caused browser slowdown.
 - CSV export for bulk data
 
 **Implementation:**
+
 ```javascript
 // Server-side pagination
 export async function getOrders(page = 1, limit = 50) {
   const { data, count } = await supabase
-    .from('orders')
-    .select('*, customer:customers(*)', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range((page - 1) * limit, page * limit - 1)
-  
-  return { orders: data, totalPages: Math.ceil(count / limit) }
+    .from("orders")
+    .select("*, customer:customers(*)", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range((page - 1) * limit, page * limit - 1);
+
+  return { orders: data, totalPages: Math.ceil(count / limit) };
 }
 ```
 
 **Result:**
+
 - Admin panel loads in < 1s regardless of data size
 - Smooth scrolling experience
 - Easy navigation through orders
@@ -812,6 +867,7 @@ export async function getOrders(page = 1, limit = 50) {
 ### Phase 2 (Post-Launch)
 
 **Customer Features**
+
 - [ ] Product review system with verified purchases
 - [ ] Advanced product recommendations (AI-powered)
 - [ ] Customer loyalty program with points
@@ -821,6 +877,7 @@ export async function getOrders(page = 1, limit = 50) {
 - [ ] Email preferences center
 
 **Admin Features**
+
 - [ ] Advanced analytics dashboard
 - [ ] Automated inventory alerts
 - [ ] Marketing campaign manager
@@ -830,6 +887,7 @@ export async function getOrders(page = 1, limit = 50) {
 - [ ] Abandoned cart recovery automation
 
 **Technical Improvements**
+
 - [ ] Progressive Web App (PWA)
 - [ ] Offline support
 - [ ] Push notifications
@@ -856,6 +914,7 @@ export async function getOrders(page = 1, limit = 50) {
 ### 3-Week Sprint Breakdown
 
 **Week 1: Foundation & Core Features**
+
 - Day 1: Project setup + Database
 - Day 2: UI Components
 - Day 3: Home page + Product components
@@ -865,6 +924,7 @@ export async function getOrders(page = 1, limit = 50) {
 - Day 7: Testing & refinement
 
 **Week 2: Checkout, Auth & Admin**
+
 - Day 8: Authentication system
 - Day 9: Checkout (Part 1)
 - Day 10: Checkout (Part 2) + Payment
@@ -874,6 +934,7 @@ export async function getOrders(page = 1, limit = 50) {
 - Day 14: Admin orders + Testing
 
 **Week 3: Optimization & Launch**
+
 - Day 15: Data migration
 - Day 16: Performance optimization
 - Day 17: SEO + Analytics
@@ -891,26 +952,31 @@ export async function getOrders(page = 1, limit = 50) {
 ### Testing Strategy
 
 **Unit Tests**
+
 - Component testing with React Testing Library
 - Utility function tests
 - Store logic tests
 
 **Integration Tests**
+
 - API endpoint testing
 - Database query testing
 - Payment flow testing
 
 **End-to-End Tests**
+
 - Critical user flows (Playwright)
 - Cross-browser testing
 - Mobile device testing
 
 **Performance Tests**
+
 - Lighthouse CI in CI/CD pipeline
 - Load testing with k6
 - Core Web Vitals monitoring
 
 **Accessibility Tests**
+
 - WAVE browser extension
 - axe DevTools
 - Keyboard navigation
@@ -939,6 +1005,7 @@ npm run test:all
 ### Implemented Tracking
 
 **Google Analytics 4**
+
 - Page views
 - E-commerce events (view_item, add_to_cart, purchase)
 - User behavior flow
@@ -946,12 +1013,14 @@ npm run test:all
 - Product performance
 
 **Error Monitoring**
+
 - Sentry integration
 - Real-time error tracking
 - Performance monitoring
 - User session replay
 
 **Custom Metrics**
+
 - Search effectiveness
 - Cart abandonment rate
 - Checkout funnel analysis
@@ -988,6 +1057,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Developer
 
 **Your Name**
+
 - Portfolio: [yourportfolio.com](https://yourportfolio.com)
 - LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
 - GitHub: [@yourusername](https://github.com/yourusername)
@@ -1008,11 +1078,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support & Contact
 
 **For Business/Client Inquiries:**
+
 - Phone: +234 806 966 2020
-- Email: sales@farzsupplements.com.ng
+- Email: farstore02@gmail.com
 - Website: [farzsupplements.com.ng](https://farzsupplements.com.ng)
 
 **For Technical Support:**
+
 - Create an issue: [GitHub Issues](https://github.com/yourusername/farz-ecommerce/issues)
 - Email: your.email@example.com
 
@@ -1035,8 +1107,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ⭐ Star this repo if you find it helpful!
 
-[Report Bug](https://github.com/yourusername/farz-ecommerce/issues) · 
-[Request Feature](https://github.com/yourusername/farz-ecommerce/issues) · 
+[Report Bug](https://github.com/yourusername/farz-ecommerce/issues) ·
+[Request Feature](https://github.com/yourusername/farz-ecommerce/issues) ·
 [View Demo](https://farzsupplements.com.ng)
 
 </div>
@@ -1048,6 +1120,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Technical Skills Demonstrated
 
 ✅ **Frontend Development**
+
 - Modern React with Next.js 14 App Router
 - Server Components & Client Components
 - Advanced state management (React Query + Zustand)
@@ -1056,6 +1129,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Performance optimization
 
 ✅ **Backend Development**
+
 - Supabase/PostgreSQL database design
 - RESTful API design
 - Authentication & authorization
@@ -1064,6 +1138,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Email notifications
 
 ✅ **Full Stack Integration**
+
 - End-to-end feature development
 - API design and consumption
 - Database schema design
@@ -1071,6 +1146,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Real-time data synchronization
 
 ✅ **Performance & Optimization**
+
 - Core Web Vitals optimization
 - Image optimization strategies
 - Code splitting and lazy loading
@@ -1078,6 +1154,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Database query optimization
 
 ✅ **UX/UI Design**
+
 - Accessibility (WCAG 2.1 AA)
 - User-centered design
 - Mobile-first approach
@@ -1085,6 +1162,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Typography and color theory
 
 ✅ **DevOps & Deployment**
+
 - Vercel deployment
 - CI/CD pipeline
 - Environment management
@@ -1092,6 +1170,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Analytics implementation
 
 ✅ **Business Understanding**
+
 - E-commerce best practices
 - Conversion optimization
 - User flow design
@@ -1121,28 +1200,33 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 💼 Why This Project Stands Out
 
 **1. Real-World Problem Solving**
+
 - Redesigned an existing failing website
 - Identified and addressed specific user pain points
 - Measurable improvements in key metrics
 
 **2. Modern Tech Stack**
+
 - Latest Next.js features (App Router, Server Components)
 - Industry-standard tools and practices
 - Scalable architecture
 
 **3. Production-Ready Code**
+
 - Clean, maintainable code structure
 - Comprehensive error handling
 - Security best practices
 - Performance optimized
 
 **4. Business Impact**
+
 - Improved conversion rates
 - Reduced support costs
 - Enhanced user satisfaction
 - Mobile-optimized for growing mobile traffic
 
 **5. Accessibility First**
+
 - Designed for older demographic
 - WCAG compliance
 - Keyboard navigation
@@ -1151,6 +1235,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **This project demonstrates:**
+
 - ✅ Full-stack development capabilities
 - ✅ Modern React/Next.js expertise
 - ✅ Database design and optimization
@@ -1163,6 +1248,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Ready to discuss this project or collaborate?**
+
 - 📧 Email: your.email@example.com
 - 💼 LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
 - 🌐 Portfolio: [yourportfolio.com](https://yourportfolio.com)
