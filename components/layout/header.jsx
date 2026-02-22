@@ -111,7 +111,7 @@ export default function Header() {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                <span>+234 806 966 2020</span>
+                <span>+2349123368239</span>
               </div>
               <span className="text-green-100">
                 Delivery within Lagos: 2 days | Outside Lagos: 2 working days
