@@ -5,7 +5,7 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 const SUPPORT_EMAIL =
-  process.env.RESEND_SUPPORT_EMAIL || "aboderindaniel482@gmail.com";
+  process.env.RESEND_SUPPORT_EMAIL || "farzstore02@gmail.com";
 
 /**
  * Sends an internal notification to the support team
