@@ -648,7 +648,8 @@ export default function NewProductPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
                 <div>
                   <label className="block text-base font-semibold text-gray-900 mb-2.5">
-                    Price <span className="text-red-500 text-lg">*</span>
+                    Discount Price{" "}
+                    <span className="text-red-500 text-lg">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-700 font-semibold text-lg">
@@ -684,7 +685,7 @@ export default function NewProductPage() {
 
                 <div>
                   <label className="block text-base font-semibold text-gray-700 mb-2.5">
-                    Compare At Price
+                    Actual Price
                   </label>
                   <div className="relative">
                     <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 text-lg">
