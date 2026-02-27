@@ -3,12 +3,15 @@
 import { verifyTransaction } from "@/lib/paystack";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { revalidatePath } from "next/cache";
+import {
+  sendPaymentSuccessEmail,
+  sendAdminOrderNotificationEmail,
+} from "@/lib/email";
 
 export async function verifyPayment(reference) {
   try {
     console.log(`[Verify] Checking payment: ${reference}`);
 
-    // Call Paystack API to verify transaction
     const verification = await verifyTransaction(reference);
 
     if (!verification.success) {
@@ -18,22 +21,27 @@ export async function verifyPayment(reference) {
       };
     }
 
-    // Get the transaction from our database
+    // Get transaction + full order (including items for the admin email)
     const { data: transaction, error: txError } = await supabaseAdmin
       .from("payment_transactions")
-      .select("*, orders(*)")
+      .select(
+        `
+        *,
+        orders(
+          *,
+          order_items(*)
+        )
+      `,
+      )
       .eq("paystack_reference", reference)
       .single();
 
     if (txError || !transaction) {
       console.error(`[Verify] Transaction not found: ${reference}`);
-      return {
-        success: false,
-        error: "Transaction not found",
-      };
+      return { success: false, error: "Transaction not found" };
     }
 
-    // Check if already processed
+    // Already processed — don't send emails again
     if (transaction.status === "success") {
       console.log(`[Verify] Already processed: ${reference}`);
       return {
@@ -45,12 +53,13 @@ export async function verifyPayment(reference) {
 
     const paystackStatus = verification.status;
     const order = transaction.orders;
+    const orderItems = order.order_items || [];
 
+    // ── PAYMENT SUCCESSFUL ────────────────────────────────────────────────────
     if (paystackStatus === "success") {
-      // Payment successful - update database
       console.log(`[Verify] Payment successful: ${reference}`);
 
-      // Update transaction
+      // 1. Update transaction record
       await supabaseAdmin
         .from("payment_transactions")
         .update({
@@ -68,7 +77,7 @@ export async function verifyPayment(reference) {
         })
         .eq("id", transaction.id);
 
-      // Update order
+      // 2. Update order status
       await supabaseAdmin
         .from("orders")
         .update({
@@ -78,13 +87,14 @@ export async function verifyPayment(reference) {
         })
         .eq("id", order.id);
 
-      // Save card if reusable
+      // 3. Save reusable card (non-blocking)
       if (
         verification.authorization?.reusable &&
         verification.authorization?.authorization_code
       ) {
-        try {
-          await supabaseAdmin.from("saved_payment_methods").upsert(
+        supabaseAdmin
+          .from("saved_payment_methods")
+          .upsert(
             {
               customer_email: order.customer_email,
               customer_id: order.customer_id,
@@ -101,22 +111,46 @@ export async function verifyPayment(reference) {
               last_used_at: new Date().toISOString(),
             },
             { onConflict: "paystack_authorization_code" },
-          );
-        } catch (cardError) {
-          console.error("[Verify] Failed to save card:", cardError);
-        }
+          )
+          .then(({ error }) => {
+            if (error) console.error("[Verify] Failed to save card:", error);
+          });
       }
+
+      // 4. Send emails concurrently (non-blocking — never fail the verify call)
+      Promise.all([
+        // Customer: payment receipt
+        sendPaymentSuccessEmail(order, {
+          ...transaction,
+          channel: verification.channel,
+        }).catch((err) =>
+          console.error("[Verify] Customer email failed:", err),
+        ),
+        // Admin: new order notification
+        sendAdminOrderNotificationEmail(
+          order,
+          {
+            ...transaction,
+            channel: verification.channel,
+            paystack_reference: reference,
+          },
+          orderItems,
+        ).catch((err) => console.error("[Verify] Admin email failed:", err)),
+      ]);
 
       revalidatePath(`/orders/${order.id}`);
       revalidatePath("/orders");
+      revalidatePath("/admin/orders");
 
       return {
         success: true,
         status: "paid",
         orderId: order.id,
       };
-    } else if (paystackStatus === "failed") {
-      // Payment failed
+    }
+
+    // ── PAYMENT FAILED ────────────────────────────────────────────────────────
+    if (paystackStatus === "failed") {
       console.log(`[Verify] Payment failed: ${reference}`);
 
       await supabaseAdmin
@@ -145,31 +179,25 @@ export async function verifyPayment(reference) {
         .eq("order_id", order.id);
 
       if (items) {
-        for (const item of items) {
-          try {
-            await supabaseAdmin.rpc("restore_product_stock", {
-              p_product_id: item.product_id,
-              p_quantity: item.quantity,
-            });
-          } catch (stockError) {
-            console.error("[Verify] Failed to restore stock:", stockError);
-          }
-        }
+        await Promise.all(
+          items.map((item) =>
+            supabaseAdmin
+              .rpc("restore_product_stock", {
+                p_product_id: item.product_id,
+                p_quantity: item.quantity,
+              })
+              .catch((err) =>
+                console.error("[Verify] Stock restore failed:", err),
+              ),
+          ),
+        );
       }
 
-      return {
-        success: true,
-        status: "failed",
-        orderId: order.id,
-      };
+      return { success: true, status: "failed", orderId: order.id };
     }
 
     // Still pending
-    return {
-      success: true,
-      status: "pending",
-      orderId: order.id,
-    };
+    return { success: true, status: "pending", orderId: order.id };
   } catch (error) {
     console.error("[Verify] Error:", error);
     return {
