@@ -212,8 +212,8 @@ export default function RefundPolicyPage() {
                 Farz Supplements and Herbal Store
               </strong>
               , your satisfaction and well-being are our top priorities. If for
-              any reason you're not completely satisfied with your purchase,
-              this policy is here to help.
+              any reason you&lsquo;re not completely satisfied with your
+              purchase, this policy is here to help.
             </p>
           </Reveal>
 
