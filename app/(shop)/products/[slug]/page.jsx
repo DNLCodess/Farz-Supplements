@@ -3,7 +3,7 @@ import { getProductBySlug, getRelatedProducts } from "@/lib/products";
 import { getProductReviews, getProductRatingSummary } from "@/lib/reviews";
 import ProductDetailClient from "./client";
 
-const BASE_URL = "https://farzsupplements.com.ng";
+const BASE_URL = "https://https://farz-supplements.vercel.app/.ng";
 
 export const revalidate = 300;
 

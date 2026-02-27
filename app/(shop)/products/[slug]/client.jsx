@@ -467,7 +467,7 @@ export default function ProductDetailClient({
                     Easy Returns
                   </p>
                   <p className="text-sm text-neutral-600">
-                    30-day return policy
+                    7 day return policy
                   </p>
                 </div>
               </div>

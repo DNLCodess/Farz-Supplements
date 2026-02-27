@@ -293,7 +293,7 @@ export default function OrderDetailPage({ params }) {
                     Try Again
                   </button>
                   <a
-                    href="mailto:support@farzsupplements.com"
+                    href="mailto:support@https://farz-supplements.vercel.app/"
                     className="bg-white text-red-900 px-6 py-3 rounded-xl font-bold border border-red-300 hover:bg-red-50 transition-colors"
                   >
                     Contact Support

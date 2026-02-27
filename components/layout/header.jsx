@@ -18,6 +18,7 @@ import {
   Settings,
   Package,
   Shield,
+  Truck,
 } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { useAuth, useSignOut } from "@/hooks/use-auth";
@@ -105,33 +106,41 @@ export default function Header() {
   return (
     <>
       {/* Top Bar */}
-      <div className="bg-green-900 text-white py-2 hidden lg:block">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                <span>+2349123368239</span>
+      {/* ── Top Bar ─────────────────────────────────────────────────────────── */}
+      <div className="hidden lg:block bg-green-950 border-b border-white/[0.06]">
+        <div className="max-w-8xl mx-auto px-5 sm:px-8">
+          <div className="flex items-center justify-between h-9">
+            {/* Left: Phone + Delivery info */}
+            <div className="flex items-center divide-x divide-white/10">
+              <a
+                href="tel:+2349123368239"
+                className="flex items-center gap-1.5 pr-4 text-[12px] text-green-300 hover:text-white transition-colors duration-150 font-sans"
+              >
+                <Phone className="w-3 h-3 shrink-0" />
+                <span className="font-medium">+2349123368239</span>
+              </a>
+              <div className="flex items-center gap-1.5 pl-4 text-[12px] text-green-400/70 font-sans">
+                <Truck className="w-3 h-3 shrink-0" />
+                <span>
+                  Lagos: 2 days&nbsp;&nbsp;·&nbsp;&nbsp;Outside Lagos: 2–3
+                  working days
+                </span>
               </div>
-              <span className="text-green-100">
-                Delivery within Lagos: 2 days | Outside Lagos: 2 working days
-              </span>
             </div>
+
+            {/* Right: Welcome + Help */}
             <div className="flex items-center gap-4">
               {isAuthenticated && (
-                <span className="text-green-100">
-                  Welcome, {user?.first_name}!
+                <span className="text-[12px] text-green-400/80 font-sans">
+                  Welcome back,{" "}
+                  <span className="text-white font-medium">
+                    {user?.first_name}
+                  </span>
                 </span>
               )}
               <Link
-                href="/track-order"
-                className="hover:text-green-100 transition-colors"
-              >
-                Track Order
-              </Link>
-              <Link
                 href="/help"
-                className="hover:text-green-100 transition-colors"
+                className="text-[12px] text-green-400/70 hover:text-white transition-colors duration-150 font-sans"
               >
                 Help
               </Link>
@@ -327,7 +336,7 @@ export default function Header() {
                             <>
                               <div className="my-2 border-t border-gray-200"></div>
                               <Link
-                                href="/admin"
+                                href="/admin/dashboard"
                                 className="flex items-center gap-3 px-4 py-2.5 text-sm text-green-900 hover:bg-green-50 transition-colors font-medium"
                                 onClick={() => setAccountMenuOpen(false)}
                               >

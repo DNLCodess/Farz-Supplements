@@ -7,7 +7,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/)
 
-🔗 **Live Demo:** [farzsupplements.com.ng](https://farzsupplements.com.ng)
+🔗 **Live Demo:** [https://farz-supplements.vercel.app/.ng](https://https://farz-supplements.vercel.app/.ng)
 
 ---
 
@@ -1079,9 +1079,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **For Business/Client Inquiries:**
 
-- Phone: +234 806 966 2020
+- Phone: +2349123368239
 - Email: farstore02@gmail.com
-- Website: [farzsupplements.com.ng](https://farzsupplements.com.ng)
+- Website: [https://farz-supplements.vercel.app/.ng](https://https://farz-supplements.vercel.app/.ng)
 
 **For Technical Support:**
 
@@ -1109,7 +1109,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 [Report Bug](https://github.com/yourusername/farz-ecommerce/issues) ·
 [Request Feature](https://github.com/yourusername/farz-ecommerce/issues) ·
-[View Demo](https://farzsupplements.com.ng)
+[View Demo](https://https://farz-supplements.vercel.app/.ng)
 
 </div>
 

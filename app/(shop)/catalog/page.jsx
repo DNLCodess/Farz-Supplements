@@ -40,7 +40,7 @@ export const metadata = {
     images: ["/images/og-image.jpg"],
   },
   alternates: {
-    canonical: "https://farzsupplements.com",
+    canonical: "https://https://farz-supplements.vercel.app/",
   },
   robots: {
     index: true,
@@ -65,10 +65,11 @@ const jsonLd = {
   name: "Farz Supplements",
   description:
     "Premium natural health products and herbal supplements in Nigeria",
-  url: "https://farzsupplements.com",
+  url: "https://https://farz-supplements.vercel.app/",
   potentialAction: {
     "@type": "SearchAction",
-    target: "https://farzsupplements.com/products?q={search_term_string}",
+    target:
+      "https://https://farz-supplements.vercel.app/products?q={search_term_string}",
     "query-input": "required name=search_term_string",
   },
   publisher: {
@@ -76,11 +77,11 @@ const jsonLd = {
     name: "Farz Supplements",
     logo: {
       "@type": "ImageObject",
-      url: "https://farzsupplements.com/logo.png",
+      url: "https://https://farz-supplements.vercel.app/logo.png",
     },
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: "+234-806-966-2020",
+      telephone: "+2349123368239",
       contactType: "Customer Service",
       areaServed: "NG",
       availableLanguage: ["en"],

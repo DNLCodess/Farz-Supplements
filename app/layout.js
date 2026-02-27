@@ -1,15 +1,30 @@
-import { Inter } from "next/font/google";
+import { DM_Serif_Display, Instrument_Sans, Inter } from "next/font/google";
 import QueryProvider from "@/lib/providers/QueryProvider";
 import "./globals.css";
 
 const inter = Inter({
-  variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const displayFont = DM_Serif_Display({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const bodyFont = Instrument_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
   display: "swap",
 });
 
 export const metadata = {
-  metadataBase: new URL("https://farzsupplements.com.ng"),
+  metadataBase: new URL("https://https://farz-supplements.vercel.app/.ng"),
   title: {
     default: "Farz Supplements - Natural Health & Wellness Products",
     template: "%s | Farz Supplements",
@@ -43,7 +58,7 @@ export const metadata = {
   openGraph: {
     type: "website",
     locale: "en_NG",
-    url: "https://farzsupplements.com.ng",
+    url: "https://https://farz-supplements.vercel.app/.ng",
     siteName: "Farz Supplements",
     title: "Farz Supplements - Natural Health & Wellness Products",
     description:
@@ -68,7 +83,7 @@ export const metadata = {
     google: "your-google-verification-code",
   },
   alternates: {
-    canonical: "https://farzsupplements.com.ng",
+    canonical: "https://https://farz-supplements.vercel.app/.ng",
   },
 };
 
@@ -82,8 +97,11 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="antialiased font-inter">
+    <html
+      lang="en"
+      className={`${inter.variable} ${displayFont.variable} ${bodyFont.variable}`}
+    >
+      <body className="antialiased font-sans">
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

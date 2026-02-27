@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Search, X, Clock, ArrowRight } from "lucide-react";
+import { Search, X, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { useSearchSuggestions } from "@/hooks/use-products";
 import {
   getSearchHistory,
@@ -15,7 +15,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 
 export default function SearchBar({
   className = "",
-  placeholder = "Search products...",
+  placeholder = "Search products…",
   autoFocus = false,
 }) {
   const router = useRouter();
@@ -26,47 +26,32 @@ export default function SearchBar({
   const searchRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Debounce query for API calls
   const debouncedQuery = useDebounce(query, 300);
-
-  // Get suggestions from API
   const { data: suggestions = [], isLoading } =
     useSearchSuggestions(debouncedQuery);
 
-  // Load search history on mount
   useEffect(() => {
     setSearchHistory(getSearchHistory());
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
+    function handleClickOutside(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
         setIsOpen(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSearch = (searchQuery) => {
-    const trimmedQuery = searchQuery.trim();
-
-    if (trimmedQuery.length === 0) return;
-
-    // Add to history
-    addToSearchHistory(trimmedQuery);
+    const q = searchQuery.trim();
+    if (!q) return;
+    addToSearchHistory(q);
     setSearchHistory(getSearchHistory());
-
-    // Navigate to search results
-    router.push(`/products?q=${encodeURIComponent(trimmedQuery)}`);
+    router.push(`/shop?q=${encodeURIComponent(q)}`);
     setIsOpen(false);
-
-    // Blur input on mobile
-    if (inputRef.current) {
-      inputRef.current.blur();
-    }
+    inputRef.current?.blur();
   };
 
   const handleSubmit = (e) => {
@@ -79,20 +64,32 @@ export default function SearchBar({
     setSearchHistory([]);
   };
 
-  const handleRemoveHistoryItem = (e, historyQuery) => {
+  const handleRemoveHistoryItem = (e, q) => {
     e.stopPropagation();
-    removeFromSearchHistory(historyQuery);
+    removeFromSearchHistory(q);
     setSearchHistory(getSearchHistory());
   };
 
-  const showSuggestions = isOpen && query.length >= 2 && suggestions.length > 0;
+  const showSuggestions = isOpen && query.length >= 2;
   const showHistory = isOpen && query.length === 0 && searchHistory.length > 0;
+  const dropdownOpen = showSuggestions || showHistory;
 
   return (
     <div ref={searchRef} className={`relative ${className}`}>
-      {/* Search Input */}
-      <form onSubmit={handleSubmit} className="relative z-10">
-        <div className="relative">
+      {/* ── Input ──────────────────────────────────────────────────── */}
+      <form onSubmit={handleSubmit}>
+        <div
+          className={`relative flex items-center transition-all duration-200 ${dropdownOpen ? "ring-2 ring-green-900/20" : ""}`}
+        >
+          {/* Search icon / spinner */}
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+            {isLoading && query.length >= 2 ? (
+              <Loader2 className="w-4 h-4 text-green-700 animate-spin" />
+            ) : (
+              <Search className="w-4 h-4 text-gray-400" />
+            )}
+          </div>
+
           <input
             ref={inputRef}
             type="search"
@@ -101,127 +98,122 @@ export default function SearchBar({
             onFocus={() => setIsOpen(true)}
             placeholder={placeholder}
             autoFocus={autoFocus}
-            className="w-full pl-12 pr-12 py-3 md:py-3.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+            autoComplete="off"
+            className={`w-full pl-10 pr-9 py-2.5 text-[14px] bg-white border border-gray-200 text-stone-900 placeholder:text-gray-400 focus:outline-none focus:border-green-800 transition-colors duration-150 font-sans ${
+              dropdownOpen
+                ? "rounded-t-xl rounded-b-none border-b-transparent"
+                : "rounded-xl"
+            }`}
           />
 
-          {/* Search Icon */}
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-
-          {/* Clear Button */}
-          {query && (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("");
-                inputRef.current?.focus();
-              }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+          {/* Clear */}
         </div>
       </form>
 
-      {/* Dropdown - Suggestions or History - FIXED Z-INDEX */}
-      {(showSuggestions || showHistory) && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-[100] max-h-96 overflow-y-auto">
-          {/* Loading State */}
-          {isLoading && query.length >= 2 && (
-            <div className="p-4 text-center text-gray-600">
-              <div className="inline-block w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-
+      {/* ── Dropdown ────────────────────────────────────────────────── */}
+      {dropdownOpen && (
+        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-lg z-[100] overflow-hidden">
           {/* Suggestions */}
-          {showSuggestions && !isLoading && (
-            <div>
-              <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                Suggestions
-              </div>
-              <ul>
-                {suggestions.map((suggestion, index) => (
-                  <li key={index}>
-                    <Link
-                      href={`/products/${suggestion.slug}`}
-                      onClick={() => {
-                        addToSearchHistory(suggestion.name);
-                        setIsOpen(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-green-50 transition-colors group"
-                    >
-                      <Search className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-                      <span className="flex-1 text-charcoal group-hover:text-green-900">
-                        {suggestion.name}
+          {showSuggestions && (
+            <>
+              {isLoading ? (
+                <div className="px-4 py-5 flex items-center justify-center gap-2 text-[13px] text-gray-400 font-sans">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Searching…
+                </div>
+              ) : suggestions.length > 0 ? (
+                <>
+                  <div className="px-4 pt-3 pb-1.5">
+                    <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-gray-400 font-sans">
+                      Suggestions
+                    </p>
+                  </div>
+                  <ul>
+                    {suggestions.map((s, i) => (
+                      <li key={i}>
+                        <Link
+                          href={`/shop/${s.slug}`}
+                          onClick={() => {
+                            addToSearchHistory(s.name);
+                            setIsOpen(false);
+                          }}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors group"
+                        >
+                          <Search className="w-3.5 h-3.5 text-gray-300 group-hover:text-green-600 transition-colors shrink-0" />
+                          <span className="flex-1 text-[14px] text-stone-800 group-hover:text-green-900 transition-colors font-sans truncate">
+                            {s.name}
+                          </span>
+                          <ArrowRight className="w-3.5 h-3.5 text-gray-300 opacity-0 group-hover:opacity-100 group-hover:text-green-600 transition-all shrink-0" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  {/* View all */}
+                  <div className="border-t border-gray-100 mx-3 mt-1" />
+                  <button
+                    onClick={() => handleSearch(query)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-[13px] font-semibold text-green-800 hover:bg-green-50 transition-colors font-sans group"
+                  >
+                    <span>
+                      See all results for{" "}
+                      <span className="text-green-900">
+                        &ldquo;{query}&rdquo;
                       </span>
-                      <ArrowRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-
-              {/* View All Results */}
-              <div className="border-t border-gray-100">
-                <button
-                  onClick={() => handleSearch(query)}
-                  className="w-full px-4 py-3 text-left text-sm font-medium text-green-900 hover:bg-green-50 transition-colors flex items-center justify-between"
-                >
-                  <span>View all results for &quot;{query}&quot;</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </>
+              ) : (
+                /* No results */
+                <div className="px-4 py-8 text-center">
+                  <Search className="w-8 h-8 text-gray-200 mx-auto mb-2.5" />
+                  <p className="text-[14px] font-semibold text-stone-700 font-sans">
+                    No results for &ldquo;{query}&rdquo;
+                  </p>
+                  <p className="text-[12px] text-gray-400 mt-1 font-sans">
+                    Try a different keyword
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
-          {/* Search History */}
+          {/* Recent searches */}
           {showHistory && (
-            <div>
-              <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <>
+              <div className="px-4 pt-3 pb-1.5 flex items-center justify-between">
+                <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-gray-400 font-sans">
                   Recent Searches
-                </div>
+                </p>
                 <button
                   onClick={handleClearHistory}
-                  className="text-xs text-green-900 hover:text-green-700 font-medium"
+                  className="text-[11px] font-semibold text-green-700 hover:text-green-900 transition-colors font-sans"
                 >
-                  Clear All
+                  Clear all
                 </button>
               </div>
-              <ul>
-                {searchHistory.map((item, index) => (
-                  <li key={index}>
+              <ul className="pb-1">
+                {searchHistory.map((item, i) => (
+                  <li key={i}>
                     <button
                       onClick={() => handleSearch(item.query)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group text-left"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors group text-left"
                     >
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="flex-1 text-charcoal">{item.query}</span>
+                      <Clock className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+                      <span className="flex-1 text-[14px] text-stone-700 font-sans truncate">
+                        {item.query}
+                      </span>
                       <button
                         onClick={(e) => handleRemoveHistoryItem(e, item.query)}
-                        className="p-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 transition-all"
+                        className="p-0.5 rounded opacity-0 group-hover:opacity-100 text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-all"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3" />
                       </button>
                     </button>
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
-
-          {/* No Results */}
-          {!isLoading && query.length >= 2 && suggestions.length === 0 && (
-            <div className="p-6 text-center">
-              <div className="text-gray-400 mb-2">
-                <Search className="w-12 h-12 mx-auto mb-3" />
-              </div>
-              <p className="text-charcoal font-medium mb-1">
-                No suggestions found
-              </p>
-              <p className="text-sm text-gray-600">
-                Try searching for something else
-              </p>
-            </div>
+            </>
           )}
         </div>
       )}

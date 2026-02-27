@@ -85,7 +85,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/categories"
+                  href="/products"
                   className="text-gray-300 hover:text-green-500 transition-colors"
                 >
                   Categories
@@ -99,14 +99,6 @@ export default function Footer() {
                   Contact Us
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/track-order"
-                  className="text-gray-300 hover:text-green-500 transition-colors"
-                >
-                  Track Order
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -114,22 +106,6 @@ export default function Footer() {
           <div>
             <h3 className="font-bold text-base mb-4">Customer Service</h3>
             <ul className="space-y-3 text-sm">
-              <li>
-                <Link
-                  href="/help"
-                  className="text-gray-300 hover:text-green-500 transition-colors"
-                >
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/shipping"
-                  className="text-gray-300 hover:text-green-500 transition-colors"
-                >
-                  Shipping Information
-                </Link>
-              </li>
               <li>
                 <Link
                   href="/returns"
@@ -144,14 +120,6 @@ export default function Footer() {
                   className="text-gray-300 hover:text-green-500 transition-colors"
                 >
                   Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-gray-300 hover:text-green-500 transition-colors"
-                >
-                  Terms & Conditions
                 </Link>
               </li>
             </ul>
@@ -169,7 +137,7 @@ export default function Footer() {
                   <Phone className="w-5 h-5 shrink-0 mt-0.5 text-green-500 group-hover:text-green-400" />
                   <div>
                     <div className="font-medium text-white mb-1">Phone</div>
-                    <div>+2349123368239</div>
+                    <div>+234 912 336 8239</div>
                     <div className="text-xs text-gray-400 mt-1">
                       Mon-Sat: 9am - 6pm
                     </div>
@@ -198,32 +166,6 @@ export default function Footer() {
                 </div>
               </li>
             </ul>
-          </div>
-        </div>
-
-        {/* Newsletter */}
-        <div className="mt-12 pt-8 border-t border-gray-700">
-          <div className="max-w-2xl mx-auto text-center">
-            <h3 className="font-bold text-lg md:text-xl mb-2">
-              Subscribe to Our Newsletter
-            </h3>
-            <p className="text-gray-300 text-sm mb-6">
-              Get updates on new products, special offers, and health tips
-            </p>
-            <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                required
-              />
-              <button
-                type="submit"
-                className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-charcoal"
-              >
-                Subscribe
-              </button>
-            </form>
           </div>
         </div>
       </div>
@@ -336,7 +278,7 @@ export default function Footer() {
 
       {/* WhatsApp Button */}
       <a
-        href="https://wa.me/2348069662020"
+        href="https://wa.me/2349123368239"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full shadow-lg flex items-center justify-center z-40 transition-transform hover:scale-110"
