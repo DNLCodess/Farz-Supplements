@@ -141,9 +141,13 @@ function StatCard({
         >
           <Icon className={`w-5 h-5 ${iconColor}`} />
         </div>
-        <span className="text-sm font-medium text-gray-600">{label}</span>
+        <span className="text-sm font-medium text-gray-600 leading-snug">
+          {label}
+        </span>
       </div>
-      <p className="text-2xl font-bold text-charcoal">{value}</p>
+      <p className="text-xl sm:text-2xl font-bold text-charcoal break-words leading-tight">
+        {value}
+      </p>
     </button>
   );
 }
