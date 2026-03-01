@@ -107,7 +107,7 @@ export default function Header() {
     <>
       {/* Top Bar */}
       {/* ── Top Bar ─────────────────────────────────────────────────────────── */}
-      <div className="hidden lg:block bg-green-950 border-b border-white/[0.06]">
+      <div className="hidden lg:block bg-green-950 border-b border-white/6">
         <div className="max-w-8xl mx-auto px-5 sm:px-8">
           <div className="flex items-center justify-between h-9">
             {/* Left: Phone + Delivery info */}
