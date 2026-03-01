@@ -122,8 +122,8 @@ export default function Header() {
               <div className="flex items-center gap-1.5 pl-4 text-[12px] text-green-400/70 font-sans">
                 <Truck className="w-3 h-3 shrink-0" />
                 <span>
-                  Lagos: 2 days&nbsp;&nbsp;·&nbsp;&nbsp;Outside Lagos: 2–3
-                  working days
+                  Lagos: 2 days&nbsp;&nbsp;·&nbsp;&nbsp;Outside Lagos: 3 working
+                  days
                 </span>
               </div>
             </div>

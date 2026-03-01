@@ -218,7 +218,7 @@ export default function MobileNav({ isOpen, onClose }) {
               <span>+2349123368239</span>
             </a>
             <div className="text-xs text-gray-600">
-              Delivery: Lagos (2 days) | Outside Lagos (2 working days)
+              Delivery: Lagos (2 days) | Outside Lagos (3 working days)
             </div>
           </div>
         </div>
