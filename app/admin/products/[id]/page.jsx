@@ -600,7 +600,7 @@ export default function ProductDetailPage() {
                   {/* Price */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">
-                      Price <span className="text-red-500">*</span>
+                      Discount Price <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-semibold text-base pointer-events-none">
@@ -632,7 +632,7 @@ export default function ProductDetailPage() {
                   {/* Compare At Price */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Compare At Price
+                      Original Price
                     </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-base pointer-events-none">
