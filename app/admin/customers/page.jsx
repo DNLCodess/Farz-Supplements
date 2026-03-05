@@ -9,7 +9,6 @@ import {
   Mail,
   Phone,
   ShoppingBag,
-  DollarSign,
   Calendar,
   Eye,
   Edit,
@@ -17,6 +16,7 @@ import {
   Loader2,
   TrendingUp,
   UserPlus,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -114,7 +114,7 @@ export default function CustomersPage() {
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-purple-700" />
+                <Wallet className="w-5 h-5 text-purple-700" />
               </div>
               <span className="text-sm font-medium text-gray-600">
                 Avg. Lifetime Value
@@ -228,7 +228,7 @@ export default function CustomersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-gray-500" />
+                        <Wallet className="w-4 h-4 text-gray-500" />
                         <span className="font-semibold text-charcoal">
                           ₦{customer.total_spent.toLocaleString()}
                         </span>

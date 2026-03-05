@@ -88,7 +88,7 @@ export function HeroSection() {
           <div style={fadeIn(220)}>
             <div className="flex flex-wrap gap-3 mb-10">
               <Link
-                href="/shop"
+                href="/products"
                 className="inline-flex items-center gap-2 px-7 py-3.5 bg-green-500 hover:bg-green-400 text-white font-bold text-[15px] rounded-xl transition-all duration-200 hover:-translate-y-px active:translate-y-0 min-h-12 font-sans shadow-lg shadow-green-900/40"
               >
                 Shop Products

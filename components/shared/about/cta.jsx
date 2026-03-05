@@ -14,7 +14,7 @@ export function CtaSection() {
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
           <Link
-            href="/shop"
+            href="/products"
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-green-900 hover:bg-green-800 text-white font-bold text-[15px] rounded-xl transition-all duration-200 hover:-translate-y-px min-h-12 font-sans"
           >
             Shop Now

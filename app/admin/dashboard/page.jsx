@@ -6,11 +6,10 @@ import {
   Package,
   ShoppingCart,
   Users,
-  TrendingUp,
-  DollarSign,
   CreditCard,
   AlertCircle,
   Loader2,
+  Wallet,
 } from "lucide-react";
 
 async function getDashboardStats() {
@@ -51,7 +50,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-green-900 transition-colors">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                <DollarSign className="w-5 h-5 text-green-700" />
+                <Wallet className="w-5 h-5 text-green-700" />
               </div>
               {stats?.revenue_growth && stats.revenue_growth > 0 && (
                 <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-lg">

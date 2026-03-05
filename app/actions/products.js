@@ -144,7 +144,7 @@ export async function createProduct(formData) {
     if (error) throw error;
 
     revalidatePath("/admin/products");
-    revalidatePath("/shop");
+    revalidatePath("/products");
     revalidatePath("/");
 
     return { success: true, data, message: "Product created successfully" };
@@ -197,7 +197,7 @@ export async function updateProduct(id, formData) {
 
     revalidatePath("/admin/products");
     revalidatePath(`/admin/products/${id}`);
-    revalidatePath("/shop");
+    revalidatePath("/products");
     revalidatePath("/");
 
     return { success: true, data, message: "Product updated successfully" };
@@ -223,7 +223,7 @@ export async function deactivateProduct(id) {
     if (error) throw error;
 
     revalidatePath("/admin/products");
-    revalidatePath("/shop");
+    revalidatePath("/products");
     revalidatePath("/");
 
     return { success: true, message: "Product deactivated" };
@@ -262,7 +262,7 @@ export async function deleteProduct(id) {
     }
 
     revalidatePath("/admin/products");
-    revalidatePath("/shop");
+    revalidatePath("/products");
     revalidatePath("/");
 
     return { success: true, message: "Product permanently deleted" };
@@ -285,7 +285,7 @@ export async function bulkUpdateProductStatus(productIds, isActive) {
     if (error) throw error;
 
     revalidatePath("/admin/products");
-    revalidatePath("/shop");
+    revalidatePath("/products");
     revalidatePath("/");
 
     return {
@@ -325,7 +325,7 @@ export async function bulkDeleteProducts(productIds) {
     }
 
     revalidatePath("/admin/products");
-    revalidatePath("/shop");
+    revalidatePath("/products");
     revalidatePath("/");
 
     return { success: true, message: `${productIds.length} products deleted` };

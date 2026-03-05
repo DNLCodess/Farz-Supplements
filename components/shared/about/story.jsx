@@ -42,7 +42,7 @@ function CategorySkeleton() {
 function CategoryCard({ cat }) {
   return (
     <Link
-      href={`/shop?category=${cat.slug}`}
+      href={`/products?category=${cat.slug}`}
       className="group relative flex flex-col justify-between p-4 bg-white border border-stone-200 rounded-2xl hover:border-green-300 hover:shadow-sm transition-all duration-200 overflow-hidden min-h-[80px]"
     >
       {/* Hover fill */}
@@ -96,7 +96,7 @@ export function StorySection() {
           </p>
 
           <Link
-            href="/shop"
+            href="/products"
             className="hidden md:inline-flex items-center gap-2 mt-8 text-[14px] font-semibold text-green-700 hover:text-green-900 transition-colors font-sans group"
           >
             Browse all products
@@ -113,7 +113,7 @@ export function StorySection() {
               What We Offer
             </p>
             <Link
-              href="/shop"
+              href="/products"
               className="text-lg font-semibold text-stone-400 hover:text-green-700 transition-colors font-sans"
             >
               View all →

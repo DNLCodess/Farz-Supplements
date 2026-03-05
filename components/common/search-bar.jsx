@@ -49,7 +49,7 @@ export default function SearchBar({
     if (!q) return;
     addToSearchHistory(q);
     setSearchHistory(getSearchHistory());
-    router.push(`/shop?q=${encodeURIComponent(q)}`);
+    router.push(`/products?q=${encodeURIComponent(q)}`);
     setIsOpen(false);
     inputRef.current?.blur();
   };
@@ -132,7 +132,7 @@ export default function SearchBar({
                     {suggestions.map((s, i) => (
                       <li key={i}>
                         <Link
-                          href={`/shop/${s.slug}`}
+                          href={`/products/${s.slug}`}
                           onClick={() => {
                             addToSearchHistory(s.name);
                             setIsOpen(false);

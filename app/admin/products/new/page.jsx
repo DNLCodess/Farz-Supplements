@@ -10,7 +10,6 @@ import {
   X,
   Loader2,
   Package,
-  DollarSign,
   BarChart3,
   Tag,
   Image as ImageIcon,
@@ -20,6 +19,7 @@ import {
   Check,
   AlertCircle,
   Sparkles,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createProduct } from "@/app/actions/products";
@@ -211,18 +211,60 @@ export default function NewProductPage() {
   };
 
   const processImageFile = (file) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-      setImageFile(file); // Store actual file for upload
-      setFormData((prev) => ({
-        ...prev,
-        imagePreview: reader.result, // For localStorage persistence
-      }));
-      setHasUnsavedChanges(true);
-      toast.success("Image ready for upload");
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = document.createElement("img");
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      // Resize to max 1000px on longest side
+      const MAX = 1000;
+      let { width, height } = img;
+      if (width > height && width > MAX) {
+        height = Math.round((height * MAX) / width);
+        width = MAX;
+      } else if (height > MAX) {
+        width = Math.round((width * MAX) / height);
+        height = MAX;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(objectUrl);
+
+      // Convert to compressed JPEG blob
+      canvas.toBlob(
+        (blob) => {
+          const compressedFile = new File(
+            [blob],
+            file.name.replace(/\.[^.]+$/, ".jpg"),
+            {
+              type: "image/jpeg",
+            },
+          );
+
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImagePreview(reader.result);
+            setImageFile(compressedFile); // ✅ upload the compressed version
+            setFormData((prev) => ({ ...prev, imagePreview: reader.result }));
+            setHasUnsavedChanges(true);
+
+            const originalKB = Math.round(file.size / 1024);
+            const compressedKB = Math.round(compressedFile.size / 1024);
+            toast.success(
+              `Image ready — compressed from ${originalKB}KB to ${compressedKB}KB`,
+            );
+          };
+          reader.readAsDataURL(compressedFile);
+        },
+        "image/jpeg",
+        0.85, // 85% quality — visually identical, much smaller
+      );
     };
-    reader.readAsDataURL(file);
+
+    img.src = objectUrl;
   };
 
   const removeImage = () => {
@@ -640,7 +682,7 @@ export default function NewProductPage() {
             <div className="bg-white rounded-xl border border-gray-200 p-6 transition-all duration-200 hover:shadow-sm">
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 text-green-900" />
+                  <Wallet className="w-4 h-4 text-green-900" />
                 </div>
                 <h2 className="text-lg font-semibold text-charcoal">Pricing</h2>
               </div>

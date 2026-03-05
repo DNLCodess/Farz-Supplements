@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase/admin-client";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
-    const fileName = formData.get("fileName");
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -15,31 +20,33 @@ export async function POST(request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Upload to Supabase storage
-    const { data, error } = await supabaseAdmin.storage
-      .from("product-images")
-      .upload(fileName, buffer, {
-        contentType: file.type,
-        upsert: false,
-      });
-
-    if (error) {
-      console.error("Supabase upload error:", error);
-      throw error;
-    }
-
-    // Get public URL
-    const { data: publicUrlData } = supabaseAdmin.storage
-      .from("product-images")
-      .getPublicUrl(fileName);
+    // Upload to Cloudinary with auto compression + format optimization
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: "farz-supplements/products",
+            transformation: [
+              { width: 800, height: 800, crop: "limit" }, // max 800x800
+              { quality: "auto:good" }, // auto compress
+              { fetch_format: "auto" }, // serve webp/avif automatically
+            ],
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          },
+        )
+        .end(buffer);
+    });
 
     return NextResponse.json({
       success: true,
-      url: publicUrlData.publicUrl,
-      path: data.path,
+      url: result.secure_url,
+      publicId: result.public_id,
     });
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error("Cloudinary upload error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to upload image" },
       { status: 500 },

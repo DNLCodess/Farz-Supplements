@@ -14,9 +14,9 @@ import {
   EyeOff,
   AlertCircle,
   Loader2,
-  DollarSign,
   X,
   AlertTriangle,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -347,7 +347,7 @@ export default function ProductsPage() {
               active={statusFilter === "inactive"}
             />
             <StatCard
-              icon={DollarSign}
+              icon={Wallet}
               iconBg="bg-purple-100"
               iconColor="text-purple-700"
               label="Inventory Value"
