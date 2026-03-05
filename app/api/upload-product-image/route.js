@@ -26,11 +26,8 @@ export async function POST(request) {
         .upload_stream(
           {
             folder: "farz-supplements/products",
-            transformation: [
-              { width: 800, height: 800, crop: "limit" }, // max 800x800
-              { quality: "auto:good" }, // auto compress
-              { fetch_format: "auto" }, // serve webp/avif automatically
-            ],
+            // ✅ No transformations here anymore — loader handles it per use case
+            // Just store the original clean upload
           },
           (error, result) => {
             if (error) reject(error);

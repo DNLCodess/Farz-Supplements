@@ -184,6 +184,12 @@ export default function ProductCard({ product }) {
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               onError={() => setImageError(true)}
+              // ✅ Skip Vercel optimization for Supabase URLs (old products)
+              // Cloudinary URLs are handled by the global custom loader
+              unoptimized={
+                imageUrl.includes("supabase.co") ||
+                imageUrl.startsWith("/images/")
+              }
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-6xl">
