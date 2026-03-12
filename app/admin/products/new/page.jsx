@@ -20,10 +20,17 @@ import {
   AlertCircle,
   Sparkles,
   Wallet,
+  Truck,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createProduct } from "@/app/actions/products";
 import { getCategories } from "@/app/actions/categories";
+import {
+  getDeliveryLocations,
+  createDeliveryLocation,
+  setProductDeliveryLocations,
+} from "@/app/actions/delivery-locations";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -57,11 +64,35 @@ export default function NewProductPage() {
   const [validationErrors, setValidationErrors] = useState({});
   const [imageFile, setImageFile] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedLocationIds, setSelectedLocationIds] = useState([]);
+  const [showNewLocationForm, setShowNewLocationForm] = useState(false);
+  const [newLocationForm, setNewLocationForm] = useState({
+    name: "",
+    state: "",
+    fee: "",
+    estimated_days: "",
+    is_active: true,
+  });
+  const [addingLocation, setAddingLocation] = useState(false);
+
+  const NIGERIAN_STATES = [
+    "Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno",
+    "Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","Gombe","Imo","Jigawa",
+    "Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Lagos","Nasarawa","Niger",
+    "Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto","Taraba","Yobe",
+    "Zamfara","FCT",
+  ];
 
   // Fetch categories
   const { data: categoriesData } = useQuery({
     queryKey: ["categories"],
     queryFn: getCategories,
+  });
+
+  // Fetch delivery locations
+  const { data: deliveryLocations = [], refetch: refetchLocations } = useQuery({
+    queryKey: ["delivery-locations"],
+    queryFn: getDeliveryLocations,
   });
 
   // Load from localStorage on mount
@@ -349,10 +380,33 @@ export default function NewProductPage() {
       // Remove imagePreview field (used only for localStorage)
       delete productData.imagePreview;
 
-      createMutation.mutate(productData);
+      const result = await createMutation.mutateAsync(productData);
+      if (result?.success && selectedLocationIds.length > 0) {
+        await setProductDeliveryLocations(result.data.id, selectedLocationIds);
+      }
     } catch (error) {
       setUploadingImage(false);
       toast.error(error.message || "Failed to process image");
+    }
+  };
+
+  const handleAddNewLocation = async (e) => {
+    e.preventDefault();
+    if (!newLocationForm.name.trim() || !newLocationForm.state || !newLocationForm.fee) {
+      toast.error("Name, state and fee are required");
+      return;
+    }
+    setAddingLocation(true);
+    const result = await createDeliveryLocation(newLocationForm);
+    setAddingLocation(false);
+    if (result.success) {
+      toast.success("Location added");
+      setSelectedLocationIds((prev) => [...prev, result.data.id]);
+      setNewLocationForm({ name: "", state: "", fee: "", estimated_days: "", is_active: true });
+      setShowNewLocationForm(false);
+      refetchLocations();
+    } else {
+      toast.error(result.error || "Failed to add location");
     }
   };
 
@@ -980,6 +1034,173 @@ export default function NewProductPage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Delivery Locations */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 transition-all duration-200 hover:shadow-sm">
+              <div className="flex items-center gap-2 mb-4 sm:mb-5">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Truck className="w-4 h-4 text-green-900" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-semibold text-charcoal">
+                    Delivery Locations
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Select which areas this product can be delivered to
+                  </p>
+                </div>
+              </div>
+
+              {deliveryLocations.length === 0 ? (
+                <p className="text-sm text-gray-500 mb-3">
+                  No delivery locations set up yet.{" "}
+                  <a
+                    href="/admin/delivery-locations"
+                    target="_blank"
+                    className="text-green-900 underline font-medium"
+                  >
+                    Add locations
+                  </a>{" "}
+                  first, or create one below.
+                </p>
+              ) : (
+                <div className="space-y-2 mb-4">
+                  {deliveryLocations.map((loc) => (
+                    <label
+                      key={loc.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-green-50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedLocationIds.includes(loc.id)}
+                          onChange={(e) => {
+                            setSelectedLocationIds((prev) =>
+                              e.target.checked
+                                ? [...prev, loc.id]
+                                : prev.filter((id) => id !== loc.id)
+                            );
+                            setHasUnsavedChanges(true);
+                          }}
+                          className="w-4 h-4 text-green-900 border-gray-300 rounded focus:ring-green-900"
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-gray-900 group-hover:text-green-900 transition-colors">
+                            {loc.name}
+                          </span>
+                          <span className="text-xs text-gray-500 ml-1.5">
+                            ({loc.state})
+                          </span>
+                          {loc.estimated_days && (
+                            <span className="text-xs text-gray-400 ml-1.5">
+                              · {loc.estimated_days}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-700">
+                        {loc.fee === 0
+                          ? <span className="text-green-700">Free</span>
+                          : `₦${Number(loc.fee).toLocaleString()}`}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              {/* Add new location inline */}
+              {showNewLocationForm ? (
+                <form
+                  onSubmit={handleAddNewLocation}
+                  className="border border-green-200 rounded-lg p-4 bg-green-50 space-y-3"
+                >
+                  <p className="text-sm font-semibold text-green-900">
+                    New Delivery Location
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Location name *"
+                      value={newLocationForm.name}
+                      onChange={(e) =>
+                        setNewLocationForm((p) => ({ ...p, name: e.target.value }))
+                      }
+                      className="col-span-2 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-green-900"
+                    />
+                    <select
+                      value={newLocationForm.state}
+                      onChange={(e) =>
+                        setNewLocationForm((p) => ({ ...p, state: e.target.value }))
+                      }
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-green-900 bg-white"
+                    >
+                      <option value="">State *</option>
+                      {NIGERIAN_STATES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                        ₦
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="50"
+                        placeholder="Fee *"
+                        value={newLocationForm.fee}
+                        onChange={(e) =>
+                          setNewLocationForm((p) => ({ ...p, fee: e.target.value }))
+                        }
+                        className="w-full pl-6 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-green-900"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Est. time (e.g. 1-2 days)"
+                      value={newLocationForm.estimated_days}
+                      onChange={(e) =>
+                        setNewLocationForm((p) => ({
+                          ...p,
+                          estimated_days: e.target.value,
+                        }))
+                      }
+                      className="col-span-2 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-green-900"
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowNewLocationForm(false)}
+                      className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={addingLocation}
+                      className="px-3 py-1.5 text-sm text-white bg-green-900 rounded-lg hover:bg-green-800 disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      {addingLocation && (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      )}
+                      Add & Select
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowNewLocationForm(true)}
+                  className="flex items-center gap-1.5 text-sm text-green-900 hover:text-green-700 font-medium transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add new location
+                </button>
+              )}
             </div>
           </div>
 

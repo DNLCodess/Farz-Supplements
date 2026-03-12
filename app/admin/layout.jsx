@@ -16,6 +16,7 @@ import {
   Home,
   Bell,
   CreditCard,
+  Truck,
 } from "lucide-react";
 
 const navigation = [
@@ -48,6 +49,11 @@ const navigation = [
     name: "Categories",
     href: "/admin/categories",
     icon: FolderTree,
+  },
+  {
+    name: "Delivery",
+    href: "/admin/delivery-locations",
+    icon: Truck,
   },
   {
     name: "Settings",
