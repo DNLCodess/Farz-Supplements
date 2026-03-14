@@ -37,111 +37,9 @@ const emptyForm = {
   is_active: true,
 };
 
-export default function DeliveryLocationsPage() {
-  const queryClient = useQueryClient();
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
-  const [form, setForm] = useState(emptyForm);
-  const [editForm, setEditForm] = useState(null);
-  const [formErrors, setFormErrors] = useState({});
-
-  const { data: locations = [], isLoading } = useQuery({
-    queryKey: ["delivery-locations"],
-    queryFn: getDeliveryLocations,
-  });
-
-  const createMutation = useMutation({
-    mutationFn: createDeliveryLocation,
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ["delivery-locations"] });
-        toast.success("Delivery location added");
-        setForm(emptyForm);
-        setShowAddForm(false);
-        setFormErrors({});
-      } else {
-        toast.error(result.error || "Failed to add location");
-      }
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateDeliveryLocation(id, data),
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ["delivery-locations"] });
-        toast.success("Location updated");
-        setEditingId(null);
-        setEditForm(null);
-      } else {
-        toast.error(result.error || "Failed to update location");
-      }
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteDeliveryLocation,
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ["delivery-locations"] });
-        toast.success("Location deleted");
-      } else {
-        toast.error(result.error || "Failed to delete location");
-      }
-      setDeletingId(null);
-    },
-  });
-
-  const validateForm = (data) => {
-    const errors = {};
-    if (!data.name.trim()) errors.name = "Name is required";
-    if (!data.state) errors.state = "State is required";
-    if (!data.fee || isNaN(parseFloat(data.fee)) || parseFloat(data.fee) < 0)
-      errors.fee = "Valid fee is required";
-    return errors;
-  };
-
-  const handleAddSubmit = (e) => {
-    e.preventDefault();
-    const errors = validateForm(form);
-    if (Object.keys(errors).length) {
-      setFormErrors(errors);
-      return;
-    }
-    createMutation.mutate(form);
-  };
-
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-    const errors = validateForm(editForm);
-    if (Object.keys(errors).length) {
-      setFormErrors(errors);
-      return;
-    }
-    updateMutation.mutate({ id: editingId, data: editForm });
-  };
-
-  const startEdit = (loc) => {
-    setEditingId(loc.id);
-    setEditForm({
-      name: loc.name,
-      state: loc.state,
-      fee: loc.fee.toString(),
-      estimated_days: loc.estimated_days || "",
-      is_active: loc.is_active,
-    });
-    setFormErrors({});
-    setShowAddForm(false);
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditForm(null);
-    setFormErrors({});
-  };
-
-  const FormFields = ({ data, onChange, errors, isPending }) => (
+// Defined outside the page component to prevent remounting on every render
+function FormFields({ data, onChange, errors, isPending, onCancel }) {
+  return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -237,11 +135,7 @@ export default function DeliveryLocationsPage() {
       <div className="sm:col-span-2 flex justify-end gap-2">
         <button
           type="button"
-          onClick={() => {
-            setShowAddForm(false);
-            setEditingId(null);
-            setFormErrors({});
-          }}
+          onClick={onCancel}
           className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
         >
           Cancel
@@ -261,6 +155,115 @@ export default function DeliveryLocationsPage() {
       </div>
     </div>
   );
+}
+
+export default function DeliveryLocationsPage() {
+  const queryClient = useQueryClient();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [editForm, setEditForm] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+
+  const { data: locations = [], isLoading } = useQuery({
+    queryKey: ["delivery-locations"],
+    queryFn: getDeliveryLocations,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createDeliveryLocation,
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["delivery-locations"] });
+        toast.success("Delivery location added");
+        setForm(emptyForm);
+        setShowAddForm(false);
+        setFormErrors({});
+      } else {
+        toast.error(result.error || "Failed to add location");
+      }
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => updateDeliveryLocation(id, data),
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["delivery-locations"] });
+        toast.success("Location updated");
+        setEditingId(null);
+        setEditForm(null);
+      } else {
+        toast.error(result.error || "Failed to update location");
+      }
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteDeliveryLocation,
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["delivery-locations"] });
+        toast.success("Location deleted");
+      } else {
+        toast.error(result.error || "Failed to delete location");
+      }
+      setDeletingId(null);
+    },
+    onError: () => {
+      toast.error("Failed to delete location");
+      setDeletingId(null);
+    },
+  });
+
+  const validateForm = (data) => {
+    const errors = {};
+    if (!data.name.trim()) errors.name = "Name is required";
+    if (!data.state) errors.state = "State is required";
+    if (!data.fee || isNaN(parseFloat(data.fee)) || parseFloat(data.fee) < 0)
+      errors.fee = "Valid fee is required";
+    return errors;
+  };
+
+  const handleAddSubmit = (e) => {
+    e.preventDefault();
+    const errors = validateForm(form);
+    if (Object.keys(errors).length) {
+      setFormErrors(errors);
+      return;
+    }
+    createMutation.mutate(form);
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    const errors = validateForm(editForm);
+    if (Object.keys(errors).length) {
+      setFormErrors(errors);
+      return;
+    }
+    updateMutation.mutate({ id: editingId, data: editForm });
+  };
+
+  const startEdit = (loc) => {
+    setEditingId(loc.id);
+    setEditForm({
+      name: loc.name,
+      state: loc.state,
+      fee: loc.fee.toString(),
+      estimated_days: loc.estimated_days || "",
+      is_active: loc.is_active,
+    });
+    setFormErrors({});
+    setShowAddForm(false);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm(null);
+    setFormErrors({});
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -305,6 +308,10 @@ export default function DeliveryLocationsPage() {
               onChange={setForm}
               errors={formErrors}
               isPending={createMutation.isPending}
+              onCancel={() => {
+                setShowAddForm(false);
+                setFormErrors({});
+              }}
             />
           </form>
         </div>
@@ -439,6 +446,7 @@ export default function DeliveryLocationsPage() {
                             onChange={setEditForm}
                             errors={formErrors}
                             isPending={updateMutation.isPending}
+                            onCancel={cancelEdit}
                           />
                         </form>
                       </td>
